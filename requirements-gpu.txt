@@ -6,3 +6,6 @@ absl-py
 matplotlib
 easydict
 pillow
+scikit-image
+numpy==1.18.3
+filterpy

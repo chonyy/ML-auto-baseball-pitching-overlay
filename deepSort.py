@@ -1,8 +1,5 @@
 import time
 import tensorflow as tf
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-if len(physical_devices) > 0:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
 from absl import app, flags, logging
 from absl.flags import FLAGS
 import core.utils as utils
@@ -20,32 +17,19 @@ from sort import *
 import pickle
 import os
 
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+if len(physical_devices) > 0:
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-flags.DEFINE_string('framework', 'tf', '(tf, tflite, trt')
-flags.DEFINE_string('weights', './checkpoints/yolov4-416',
-                    'path to weights file')
-flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_boolean('tiny', False, 'yolo or yolo-tiny')
-flags.DEFINE_string('model', 'yolov4', 'yolov3 or yolov4')
-flags.DEFINE_string('video', './data/road.mp4', 'path to input video')
-flags.DEFINE_float('iou', 0.45, 'iou threshold')
-flags.DEFINE_float('score', 0.25, 'score threshold')
-flags.DEFINE_string('output', None, 'path to output video')
-flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
-flags.DEFINE_boolean('dis_cv2_window', False, 'disable cv2 window during the process') # this is good for the .ipynb
-
-def getBallFrames(video_path, input_size):
+def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output, video, output_format):
     print("Video from: ", video_path)
     vid = cv2.VideoCapture(video_path)
 
-    saved_model_loaded = tf.saved_model.load(FLAGS.weights, tags=[tag_constants.SERVING])
-    infer = saved_model_loaded.signatures['serving_default']
-    
     width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH)/2)
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT)/2)
     fps = int(vid.get(cv2.CAP_PROP_FPS))
-    codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
-    out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
+    codec = cv2.VideoWriter_fourcc(*output_format)
+    out = cv2.VideoWriter(output, codec, fps, (width, height))
 
 
     width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -91,8 +75,8 @@ def getBallFrames(video_path, input_size):
                 pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
             max_output_size_per_class=50,
             max_total_size=50,
-            iou_threshold=FLAGS.iou,
-            score_threshold=FLAGS.score
+            iou_threshold=iou,
+            score_threshold=scoree
         )
 
         boxes = boxes.numpy()
@@ -169,27 +153,36 @@ def getBallFrames(video_path, input_size):
 
     return ball_frames
 
-def main(_argv):
+def main():
+    weights = './model/yolov4-custom-416'
+    size = 416
+    iou = 0.45
+    scoree = 0.25
+    tiny = False
+    output = None
+    video = './data/2.mp4'
+    output_format = 'XVID'
+
     config = ConfigProto()
     config.gpu_options.allow_growth = True
     session = InteractiveSession(config=config)
-    STRIDES, ANCHORS, NUM_CLASS, XYSCALE = utils.load_config(FLAGS)
-    input_size = FLAGS.size
-    video_path = FLAGS.video
+    STRIDES, ANCHORS, NUM_CLASS, XYSCALE = utils.load_config(tiny)
+    input_size = size
+    video_path = video
+
+    saved_model_loaded = tf.saved_model.load(weights, tags=[tag_constants.SERVING])
+    infer = saved_model_loaded.signatures['serving_default']
 
     videoFrames = []
     root = './videos6'
 
     for path in os.listdir(root):
         print(path)
-        ball_frames = getBallFrames(root + '/' + path, input_size)
+        ball_frames = getBallFrames(root + '/' + path, input_size, infer, size, iou, scoree, tiny, output, video, output_format)
         videoFrames.append(ball_frames)
 
     with open('frames6.pkl', 'wb') as f:
         pickle.dump(videoFrames, f)
 
 if __name__ == '__main__':
-    try:
-        app.run(main)
-    except SystemExit:
-        pass
+    main()
