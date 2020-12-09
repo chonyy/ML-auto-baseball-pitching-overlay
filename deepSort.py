@@ -174,7 +174,7 @@ def main():
     infer = saved_model_loaded.signatures['serving_default']
 
     videoFrames = []
-    root = './videos6'
+    root = './roots/videos'
 
     for path in os.listdir(root):
         print(path)
