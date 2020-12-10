@@ -1,7 +1,5 @@
 import time
 import tensorflow as tf
-from absl import app, flags, logging
-from absl.flags import FLAGS
 import core.utils as utils
 from core.yolov4 import filter_boxes
 from tensorflow.python.saved_model import tag_constants
@@ -40,7 +38,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
     track_colors = [(127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
 
     # Create Object Tracker
-    tracker =  Sort(max_age=8, min_hits=4, iou_threshold=0.05)
+    tracker =  Sort(max_age=8, min_hits=2, iou_threshold=0.05)
     balls = []
     ball_frames=[]
     frames = []
@@ -94,6 +92,12 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
             coor[2] = (coor[2] * frame_h)
             coor[1] = (coor[1] * frame_w)
             coor[3] = (coor[3] * frame_w)
+
+            centerX = int((coor[1] + coor[3]) / 2)
+            centerY = int((coor[0] + coor[2]) / 2)
+
+            # cv2.circle(frame, (centerX, centerY), 15, (0, 0, 255), -1)
+
             detections.append(np.array([coor[1]-offset, coor[0]-offset, coor[3]+offset, coor[2]+offset, score]))
 
         if(len(detections) > 0):
@@ -167,8 +171,6 @@ def main():
     config.gpu_options.allow_growth = True
     session = InteractiveSession(config=config)
     STRIDES, ANCHORS, NUM_CLASS, XYSCALE = utils.load_config(tiny)
-    input_size = size
-    video_path = video
 
     saved_model_loaded = tf.saved_model.load(weights, tags=[tag_constants.SERVING])
     infer = saved_model_loaded.signatures['serving_default']
@@ -178,7 +180,7 @@ def main():
 
     for path in os.listdir(root):
         print(path)
-        ball_frames = getBallFrames(root + '/' + path, input_size, infer, size, iou, scoree, tiny, output, video, output_format)
+        ball_frames = getBallFrames(root + '/' + path, size, infer, size, iou, scoree, tiny, output, video, output_format)
         videoFrames.append(ball_frames)
 
     with open('frames6.pkl', 'wb') as f:
