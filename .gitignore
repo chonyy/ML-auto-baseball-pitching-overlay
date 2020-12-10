@@ -131,3 +131,6 @@ dmypy.json
 env 
 detections
 model
+model.zip
+*.pkl
+*.avi
