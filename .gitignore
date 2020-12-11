@@ -130,7 +130,6 @@ dmypy.json
 
 env 
 detections
-model
 *.zip
 *.pkl
 *.avi
