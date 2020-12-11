@@ -13,9 +13,9 @@ from sort import *
 import pickle
 import os
 
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-if len(physical_devices) > 0:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# physical_devices = tf.config.experimental.list_physical_devices('GPU')
+# if len(physical_devices) > 0:
+#     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output, video, output_format):
     print("Video from: ", video_path)
@@ -27,10 +27,6 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
     codec = cv2.VideoWriter_fourcc(*output_format)
     out = cv2.VideoWriter(output, codec, fps, (width, height))
 
-
-    width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    trace = np.full((int(height), int(width), 3), 255, np.uint8)
     frame_id = 0
 
     track_colors = [(127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
@@ -49,9 +45,9 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
             frames.append(frame)
         else:
             if frame_id == vid.get(cv2.CAP_PROP_FRAME_COUNT):
-                print("Video processing complete")
+                print("Processing complete")
                 break
-            raise ValueError("No image! Try with another video format")
+            raise ValueError("Something went wrong! Try with another video format")
         
         frame_size = frame.shape[:2]
         image_data = cv2.resize(frame, (input_size, input_size))
@@ -83,20 +79,21 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
         frame_h, frame_w, _ = frame.shape
         detections = []
         offset = 25
+        accuracyThreshold = 0.9
+
         for i in range(valid_detections[0]):
-            coor = boxes[0][i]
             score = scores[0][i]
-            coor[0] = (coor[0] * frame_h)
-            coor[2] = (coor[2] * frame_h)
-            coor[1] = (coor[1] * frame_w)
-            coor[3] = (coor[3] * frame_w)
+            if(score > accuracyThreshold):
+                coor = boxes[0][i]
+                coor[0] = (coor[0] * frame_h)
+                coor[2] = (coor[2] * frame_h)
+                coor[1] = (coor[1] * frame_w)
+                coor[3] = (coor[3] * frame_w)
 
-            centerX = int((coor[1] + coor[3]) / 2)
-            centerY = int((coor[0] + coor[2]) / 2)
+                centerX = int((coor[1] + coor[3]) / 2)
+                centerY = int((coor[0] + coor[2]) / 2)
 
-            # cv2.circle(frame, (centerX, centerY), 15, (0, 0, 255), -1)
-
-            detections.append(np.array([coor[1]-offset, coor[0]-offset, coor[3]+offset, coor[2]+offset, score]))
+                detections.append(np.array([coor[1]-offset, coor[0]-offset, coor[3]+offset, coor[2]+offset, score]))
 
         if(len(detections) > 0):
             trackings = tracker.update(np.array(detections))
@@ -104,7 +101,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
             trackings = tracker.update()
 
         for t in trackings:
-            print('id', t[4])
+            # print('id', t[4])
             t = t.astype('int32') 
             t[0] = int(t[0])
             t[1] = int(t[1])
@@ -112,7 +109,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
             t[3] = int(t[3])
             start = (t[0], t[1])
             end = (t[2], t[3])
-            print(start)
+            # print(start)
             cv2.rectangle(frame, start, end, (255, 0, 0), 5) 
             cv2.putText(frame, str(t[4]), start, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255), 2, cv2.LINE_AA)
 
@@ -127,7 +124,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
         for ballX, ballY, ballId in balls:
             overlay = frame.copy()
             cv2.circle(overlay, (ballX, ballY), 10, track_colors[ballId % 12], -1)
-            alpha = 0.75  # Transparency factor.
+            alpha = 0.75  
             frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
 
         if(len(trackings) > 0):
@@ -178,7 +175,7 @@ def main():
     infer = saved_model_loaded.signatures['serving_default']
 
     videoFrames = []
-    root = './roots/videos5'
+    root = './roots/videos'
 
     for path in os.listdir(root):
         print(path)

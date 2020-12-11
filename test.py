@@ -26,11 +26,11 @@ width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fps = int(vid.get(cv2.CAP_PROP_FPS) / 4)
 codec = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('test6.avi', codec, fps, (width, height))
+out = cv2.VideoWriter('test7.avi', codec, fps, (width, height))
 
 alpha = 0.5
 frames = None
-with open('frames6.pkl', 'rb') as f:
+with open('frames7.pkl', 'rb') as f:
     frames = pickle.load(f)
 
 framesList = sorted(frames, key=len, reverse=True)
