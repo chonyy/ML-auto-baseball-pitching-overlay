@@ -6,8 +6,6 @@ from tensorflow.python.saved_model import tag_constants
 from PIL import Image
 import cv2
 import numpy as np
-from tensorflow.compat.v1 import ConfigProto
-from tensorflow.compat.v1 import InteractiveSession
 import core.config as cfg
 import copy
 from tracker import Tracker
@@ -38,7 +36,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
     track_colors = [(127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
 
     # Create Object Tracker
-    tracker =  Sort(max_age=8, min_hits=2, iou_threshold=0.05)
+    tracker =  Sort(max_age=8, min_hits=3, iou_threshold=0.05)
     balls = []
     ball_frames=[]
     frames = []
@@ -84,7 +82,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
 
         frame_h, frame_w, _ = frame.shape
         detections = []
-        offset = 50
+        offset = 25
         for i in range(valid_detections[0]):
             coor = boxes[0][i]
             score = scores[0][i]
@@ -145,8 +143,6 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
         print(info)
 
         result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        # combined = np.concatenate((result, trace), axis=1)  
-        # detection = cv2.resize((combined), (0, 0), fx=0.5, fy=0.5)
         detection = cv2.resize((result), (0, 0), fx=0.5, fy=0.5)
         cv2.imshow("result", detection)
         if cv2.waitKey(1) & 0xFF == ord('q'): break
@@ -158,32 +154,38 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
     return ball_frames
 
 def main():
-    weights = './model/yolov4-custom-416'
+    weights = None
+    tiny = True
+
+    if(tiny):
+        weights = './model/yolov4-tiny-baseball-416'
+    else:
+        weights = './model/yolov4-baseball-416'
+    
+
     size = 416
-    iou = 0.45
+    # iou = 0.45
+    iou = 0.2
     scoree = 0.25
-    tiny = False
+    tiny = True
     output = None
     video = './data/2.mp4'
     output_format = 'XVID'
 
-    config = ConfigProto()
-    config.gpu_options.allow_growth = True
-    session = InteractiveSession(config=config)
     STRIDES, ANCHORS, NUM_CLASS, XYSCALE = utils.load_config(tiny)
 
     saved_model_loaded = tf.saved_model.load(weights, tags=[tag_constants.SERVING])
     infer = saved_model_loaded.signatures['serving_default']
 
     videoFrames = []
-    root = './roots/videos'
+    root = './roots/videos5'
 
     for path in os.listdir(root):
         print(path)
         ball_frames = getBallFrames(root + '/' + path, size, infer, size, iou, scoree, tiny, output, video, output_format)
         videoFrames.append(ball_frames)
 
-    with open('frames6.pkl', 'wb') as f:
+    with open('frames7.pkl', 'wb') as f:
         pickle.dump(videoFrames, f)
 
 if __name__ == '__main__':

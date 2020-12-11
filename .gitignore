@@ -131,6 +131,7 @@ dmypy.json
 env 
 detections
 model
-model.zip
+*.zip
 *.pkl
 *.avi
+model/yolov4-baseball-416
