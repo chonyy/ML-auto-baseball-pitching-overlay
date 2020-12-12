@@ -14,7 +14,7 @@
 
 > ⚾ Overlaying pitching motion and trajectory automatically with machine learning!
 
-This project takes your baseball pitching clips and **automatically** generates the overlay. A fine-tuned Yolov4 model is used to get the location of the ball, then I implemented SORT tracking algorithm to keep track of each individual ball. Lastly, I have applied some image registration technique to deal with slight camera shift on each clip.
+This project takes your baseball pitching clips and **automatically** generates the overlay. A fine-tuned Yolov4 model is used to get the location of the ball, then I implemented SORT tracking algorithm to keep track of each individual ball. Lastly, I will apply some image registration techniques to deal with slight camera shift on each clip.
 
 I'm still trying to improve it! Feel free to follow this project, also checkout the Todo list. 
 
@@ -44,13 +44,13 @@ pip install -r requirements.txt
 
 Last, run the project with your own clips!
 
-#### To try a sample
+#### Try a sample
 
 ``` python
 python picthing_overlay.py
 ```
 
-#### To try with yout own clips
+#### Try with yout own clips
 
 Place your pitching videos in a folder, then specify the path in the CLI.
 
@@ -60,8 +60,8 @@ python pitching_overlay.py --videos_folder "./videos/videos2"
 
 ## ☑️ Todo
 
-* Implement image registration to deal with camera shift
-* Build a demo web app for people to use it in realtime on web
-* Improve the visual effect
-* Write a Medium post to explain the technical workflow
-* Draw a structure diagram
+- [ ] Implement image registration to deal with camera shift
+- [ ] Build a demo web app for people to use it in realtime on web
+- [ ] Improve the visual effect
+- [ ] Write a Medium post to explain the technical workflow
+- [ ] Draw a structure diagram
