@@ -1,6 +1,6 @@
 from tensorflow.python.saved_model import tag_constants
 from optparse import OptionParser
-from utils import *
+from src.utils import *
 import os
 
 # physical_devices = tf.config.experimental.list_physical_devices('GPU')
