@@ -7,6 +7,7 @@ import numpy as np
 import copy
 from src.tracker import Tracker
 from src.sort import *
+from optparse import OptionParser
 import pickle
 import os
 
@@ -153,6 +154,13 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny):
     return ball_frames, width, height, fps
 
 if __name__ == '__main__':
+    optparser = OptionParser()
+    optparser.add_option('-f', '--videos_folder',
+                         dest='rootDir',
+                         help='Root directory that contains your pitching videos',
+                         default='./videos/videos')
+    (options, args) = optparser.parse_args()
+
     tiny = True
     size = 416
     iou = 0.2
@@ -168,7 +176,7 @@ if __name__ == '__main__':
     infer = saved_model_loaded.signatures['serving_default']
 
     videoFrames = []
-    rootDir = './videos/videos'
+    rootDir = options.rootDir
     outputPath = rootDir + '/overlay.avi'
 
     for path in os.listdir(rootDir):
