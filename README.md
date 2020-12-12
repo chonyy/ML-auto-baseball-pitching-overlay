@@ -36,10 +36,26 @@ Before running the project, we have to install all the dependencies from require
 pip install -r requirements.txt
 ```
 
-### 
+### Overlay!
 
 Last, run the project with your own clips!
+
+#### To try a sample
 
 ``` python
 python picthing_overlay.py
 ```
+
+#### To try with yout own clips
+
+Place your pitching videos in a folder, then specify the path in the CLI.
+
+``` python
+python pitching_overlay.py --videos_folder "./videos/videos2"
+```
+
+### Todo
+
+* Implement image registration to deal with camera shift
+* Build a demo web app for people to use it in realtime on web
+* Improve visual effect
