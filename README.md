@@ -16,7 +16,7 @@
 
 This project takes your baseball pitching clips and **automatically** generates the overlay. A fine-tuned Yolov4 model is used to get the location of the ball. Then, I implemented SORT tracking algorithm to keep track of each individual ball. Lastly, I will apply some image registration techniques to deal with slight camera shift on each clip.
 
-I'm still trying to improve it! Feel free to follow this project, also checkout the Todo list. 
+I'm still trying to improve it! Feel free to follow this project, also check out the Todo list. 
 
 The idea came from [this incredible overlay](https://www.youtube.com/watch?v=jUbAAurrnwU&ab_channel=YuTubeKs).
 
