@@ -4,8 +4,8 @@ from PIL import Image
 import cv2
 import numpy as np
 import copy
-from src.tracker import Tracker
-from src.sort import *
+from src.SORT_tracker.tracker import Tracker
+from src.SORT_tracker.sort import *
 
 def generate_overlay(frames, width, height, fps, outputPath):
     print('Saving overlay result to', outputPath)

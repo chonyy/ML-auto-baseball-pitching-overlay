@@ -1,13 +1,3 @@
-'''
-    File name         : kalman_filter.py
-    File Description  : Kalman Filter Algorithm Implementation
-    Author            : Srini Ananthakrishnan
-    Date created      : 07/14/2017
-    Date last modified: 07/16/2017
-    Python Version    : 2.7
-'''
-
-# Import python libraries
 import numpy as np
 
 
