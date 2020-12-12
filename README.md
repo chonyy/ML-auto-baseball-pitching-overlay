@@ -55,7 +55,7 @@ python picthing_overlay.py
 Place your pitching videos in a folder, then specify the path in the CLI.
 
 ``` python
-python pitching_overlay.py --videos_folder "./videos/videos2"
+python pitching_overlay.py --videos_folder "./videos/videos"
 ```
 
 ## ☑️ Todo
