@@ -12,7 +12,7 @@
     <a target="_blank" href="http://makeapullrequest.com" title="PRs Welcome"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></a>
 </p>
 
-> ⚾ Overlaying pitching motion and trajectory automatically with machine learning!
+> ⚾ Overlaying pitch motion and trajectory automatically with machine learning!
 
 This project takes your baseball pitching clips and **automatically** generates the overlay. A fine-tuned Yolov4 model is used to get the location of the ball, then I implemented SORT tracking algorithm to keep track of each individual ball. Lastly, I will apply some image registration techniques to deal with slight camera shift on each clip.
 
