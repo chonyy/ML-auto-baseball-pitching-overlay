@@ -12,11 +12,11 @@
     <a target="_blank" href="http://makeapullrequest.com" title="PRs Welcome"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></a>
 </p>
 
-> ⚾ Overlaying pitching motion and trajectory automatically with machine learning!
+> ⚾ Overlaying pitch motion and trajectory automatically with machine learning!
 
-This project takes your baseball pitching clips and **automatically** generates the overlay. A fine-tuned Yolov4 model is used to get the location of the ball, then I implemented SORT tracking algorithm to keep track of each individual ball. Lastly, I will apply some image registration techniques to deal with slight camera shift on each clip.
+This project takes your baseball pitching clips and **automatically** generates the overlay. A fine-tuned Yolov4 model is used to get the location of the ball. Then, I implemented SORT tracking algorithm to keep track of each individual ball. Lastly, I will apply some image registration techniques to deal with slight camera shift on each clip.
 
-I'm still trying to improve it! Feel free to follow this project, also checkout the Todo list. 
+I'm still trying to improve it! Feel free to follow this project, also check out the Todo list. 
 
 The idea came from [this incredible overlay](https://www.youtube.com/watch?v=jUbAAurrnwU&ab_channel=YuTubeKs).
 
@@ -55,7 +55,7 @@ python picthing_overlay.py
 Place your pitching videos in a folder, then specify the path in the CLI.
 
 ``` python
-python pitching_overlay.py --videos_folder "./videos/videos2"
+python pitching_overlay.py --videos_folder "./videos/videos"
 ```
 
 ## ☑️ Todo
