@@ -14,22 +14,40 @@ import os
 # if len(physical_devices) > 0:
 #     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output, video, output_format):
+def generate_overlay(frames, width, height, fps, outputPath):
+    codec = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter(outputPath, codec, fps / 2, (width, height))
+    alpha = 0.5
+
+    framesList = sorted(frames, key=len, reverse=True)
+
+    for idx, frame in enumerate(framesList[0]):
+        for frameList in framesList[1:]:
+            if(idx < len(frameList)):
+                frame = cv2.addWeighted(frameList[idx], alpha, frame, 1 - alpha, 0)
+            else:
+                frame = cv2.addWeighted(frameList[len(frameList) - 1], alpha, frame, 1 - alpha, 0)
+
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        cv2.imshow('frame', frame)
+        out.write(frame)
+        if cv2.waitKey(120) & 0xFF == ord('q'): break
+
+def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny):
     print("Video from: ", video_path)
     vid = cv2.VideoCapture(video_path)
 
-    width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH)/2)
-    height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT)/2)
+    width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(vid.get(cv2.CAP_PROP_FPS))
-    codec = cv2.VideoWriter_fourcc(*output_format)
-    out = cv2.VideoWriter(output, codec, fps, (width, height))
 
     frame_id = 0
 
     track_colors = [(127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
 
     # Create Object Tracker
-    tracker =  Sort(max_age=8, min_hits=3, iou_threshold=0.05)
+    tracker =  Sort(max_age=8, min_hits=2, iou_threshold=0.1)
     balls = []
     ball_frames=[]
     frames = []
@@ -114,9 +132,6 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
             centerY = int((t[1] + t[3]) / 2)
             balls.append([centerX, centerY, t[4]])
 
-            # cv2.circle(frame, (centerX, centerY), 15, track_colors[clr], -1)
-            # cv2.circle(trace, (centerX, centerY), 15, track_colors[clr], -1)
-
         for ballX, ballY, ballId in balls:
             overlay = frame.copy()
             cv2.circle(overlay, (ballX, ballY), 10, track_colors[ballId % 12], -1)
@@ -128,56 +143,37 @@ def getBallFrames(video_path, input_size, infer, size, iou, scoree, tiny, output
                 ball_frames.extend(frames[-20:])
             ball_frames.append(frame)
 
-
-        # curr_time = time.time()
-        # exec_time = curr_time - prev_time
-        # result = np.asarray(image)
-        # info = "Process time: %.2f ms" %(1000*exec_time)
-        # print(info)
-
         result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         detection = cv2.resize((result), (0, 0), fx=0.5, fy=0.5)
         cv2.imshow("result", detection)
         if cv2.waitKey(1) & 0xFF == ord('q'): break
 
-        out.write(detection)
-
         frame_id += 1
 
-    return ball_frames
+    return ball_frames, width, height, fps
 
-def main():
-    weights = None
+if __name__ == '__main__':
     tiny = True
-
+    size = 416
+    iou = 0.2
+    scoree = 0.25
+    
     if(tiny):
         weights = './model/yolov4-tiny-baseball-416'
     else:
         weights = './model/yolov4-baseball-416'
-    
 
-    size = 416
-    # iou = 0.45
-    iou = 0.2
-    scoree = 0.25
-    tiny = True
-    output = './test.avi'
-    video = './data/2.mp4'
-    output_format = 'XVID'
-
+    # Load pretrained model
     saved_model_loaded = tf.saved_model.load(weights, tags=[tag_constants.SERVING])
     infer = saved_model_loaded.signatures['serving_default']
 
     videoFrames = []
-    root = './videos/videos'
+    rootDir = './videos/videos'
+    outputPath = rootDir + '/overlay.avi'
 
-    for path in os.listdir(root):
+    for path in os.listdir(rootDir):
         print(path)
-        ball_frames = getBallFrames(root + '/' + path, size, infer, size, iou, scoree, tiny, output, video, output_format)
+        ball_frames, width, height, fps = getBallFrames(rootDir + '/' + path, size, infer, size, iou, scoree, tiny)
         videoFrames.append(ball_frames)
 
-    with open('frames7.pkl', 'wb') as f:
-        pickle.dump(videoFrames, f)
-
-if __name__ == '__main__':
-    main()
+    generate_overlay(videoFrames, width, height, fps, outputPath)
