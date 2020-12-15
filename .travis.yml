@@ -1,0 +1,2 @@
+language: python
+script: python test_scripts/test3.py
