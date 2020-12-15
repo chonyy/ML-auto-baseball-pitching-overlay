@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     tiny = True
     size = 416
-    iou = 0.2
+    iou = 0.45
     score = 0.25
     
     if(tiny):

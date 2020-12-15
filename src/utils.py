@@ -15,7 +15,7 @@ def generate_overlay(frames, width, height, fps, outputPath):
     print('Saving overlay result to', outputPath)
 
     codec = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('./videos/Overlay.avi', codec, fps / 2, (width, height))
+    out = cv2.VideoWriter(outputPath, codec, fps / 4, (width, height))
     alpha = 0.5
     shifts = {}
 
@@ -45,6 +45,7 @@ def image_registration(ref_image, offset_image, shifts, listIdx, width, height):
     else:
         xoff, yoff = shifts[listIdx]
 
+    # print('shift', xoff, yoff)
     matrix = np.float32([[1, 0, -xoff], [0, 1, -yoff]])
     corrected_image = cv2.warpAffine(offset_image, matrix, (width, height))
     # print(time.time() - prev_time)
