@@ -58,13 +58,13 @@ Place your pitching videos in a folder, then specify the path in the CLI.
 python pitching_overlay.py --videos_folder "./videos/videos"
 ```
 
-## Project Structure
+## 🔨 Project Structure
 
 <p align=center>
     <img src="img/structure.png">
 </p>
 
-## More Demo
+## 🎬 More Demo
 
 <p align=center>
     <img src="img/4_balls.gif">
