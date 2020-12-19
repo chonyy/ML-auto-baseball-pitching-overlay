@@ -67,6 +67,7 @@ python pitching_overlay.py --videos_folder "./videos/videos"
 ## More Demo
 
 <p align=center>
+    <img src="img/3_balls.gif">
     <img src="img/4_balls.gif">
 </p>
 
