@@ -47,7 +47,7 @@ Last, run the project with your own clips!
 #### Try a sample
 
 ``` python
-python picthing_overlay.py
+python pitching_overlay.py
 ```
 
 #### Try with yout own clips
