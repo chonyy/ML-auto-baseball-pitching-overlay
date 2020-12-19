@@ -17,7 +17,6 @@ def generate_overlay(frames, width, height, fps, outputPath):
 
     codec = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(outputPath, codec, fps / 4, (width, height))
-    alpha = 1 / len(frameLists)
     shifts = {}
 
     for idx, baseFrame in enumerate(frameLists[0]):
@@ -27,8 +26,11 @@ def generate_overlay(frames, width, height, fps, outputPath):
             else:
                 overlayFrame = frameList[len(frameList) - 1]
 
+            alpha = 1.0 / (listIdx + 2)
+            beta = 1.0 - alpha
             corrected_frame = image_registration(baseFrame, overlayFrame, shifts, listIdx, width, height)            
-            baseFrame = cv2.addWeighted(corrected_frame, alpha, baseFrame, 1 - alpha, 0)
+            # baseFrame = cv2.addWeighted(baseFrame, 1, corrected_frame, alpha, 0)
+            baseFrame = cv2.addWeighted(corrected_frame, alpha, baseFrame, beta, 0)
 
         resultFrame = cv2.cvtColor(baseFrame, cv2.COLOR_RGB2BGR)
         cv2.imshow('resultFrame', resultFrame)
