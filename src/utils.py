@@ -13,13 +13,14 @@ from src.SORT_tracker.sort import *
 
 def generate_overlay(frames, width, height, fps, outputPath):
     print('Saving overlay result to', outputPath)
+    frameLists = sorted(frames, key=len, reverse=True)
 
     codec = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(outputPath, codec, fps / 4, (width, height))
-    alpha = 0.5
+    alpha = 1 / len(frameLists)
     shifts = {}
 
-    frameLists = sorted(frames, key=len, reverse=True)
+    print('len', len(frameLists))
 
     for idx, baseFrame in enumerate(frameLists[0]):
         for listIdx, frameList in enumerate(frameLists[1:]):
@@ -28,8 +29,8 @@ def generate_overlay(frames, width, height, fps, outputPath):
             else:
                 overlayFrame = frameList[len(frameList) - 1]
 
-            corrected_image = image_registration(baseFrame, overlayFrame, shifts, listIdx, width, height)            
-            baseFrame = cv2.addWeighted(corrected_image, alpha, baseFrame, 1 - alpha, 0)
+            corrected_frame = image_registration(baseFrame, overlayFrame, shifts, listIdx, width, height)            
+            baseFrame = cv2.addWeighted(corrected_frame, alpha, baseFrame, 1 - alpha, 0)
 
         resultFrame = cv2.cvtColor(baseFrame, cv2.COLOR_RGB2BGR)
         cv2.imshow('resultFrame', resultFrame)
@@ -62,10 +63,10 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
 
     frame_id = 0
 
-    track_colors = [(127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
+    track_colors = [(161, 235, 52), (161, 235, 52), (161, 235, 52), (235, 171, 52), (255, 235, 52), (255, 235, 52), (255, 235, 52), (210, 235, 52), (52, 235, 131), (52, 64, 235), (0, 0, 255), (0, 255, 255), (255, 0, 127), (127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
 
     # Create Object Tracker
-    tracker =  Sort(max_age=8, min_hits=2, iou_threshold=0.3)
+    tracker =  Sort(max_age=8, min_hits=3, iou_threshold=0.3)
     balls = []
     ball_frames=[]
     frames = []
@@ -111,8 +112,8 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
 
         frame_h, frame_w, _ = frame.shape
         detections = []
-        offset = 25
-        accuracyThreshold = 0.95
+        offset = 30
+        accuracyThreshold = 0.8
 
         for i in range(valid_detections[0]):
             score = scores[0][i]
@@ -152,7 +153,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
 
         for ballX, ballY, ballId in balls:
             overlay = frame.copy()
-            cv2.circle(overlay, (ballX, ballY), 10, track_colors[ballId % 12], -1)
+            cv2.circle(overlay, (ballX, ballY), 12, track_colors[ballId % 12], -1)
             alpha = 0.75  
             frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
 
