@@ -20,8 +20,6 @@ def generate_overlay(frames, width, height, fps, outputPath):
     alpha = 1 / len(frameLists)
     shifts = {}
 
-    print('len', len(frameLists))
-
     for idx, baseFrame in enumerate(frameLists[0]):
         for listIdx, frameList in enumerate(frameLists[1:]):
             if(idx < len(frameList)):
