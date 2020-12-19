@@ -1,5 +1,5 @@
 <p align=center>
-    <img src="img/baseball.gif">
+    <img src="img/2_balls.gif">
 </p>
 
 <p align=center>
@@ -57,6 +57,18 @@ Place your pitching videos in a folder, then specify the path in the CLI.
 ``` python
 python pitching_overlay.py --videos_folder "./videos/videos"
 ```
+
+## Project Structure
+
+<p align=center>
+    <img src="img/structure.png">
+</p>
+
+## More Demo
+
+<p align=center>
+    <img src="img/4_balls.gif">
+</p>
 
 ## ☑️ Todo
 
