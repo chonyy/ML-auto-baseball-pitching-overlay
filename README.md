@@ -77,7 +77,7 @@ python pitching_overlay.py --videos_folder "./videos/videos"
 
 - [X] Implement image registration to deal with camera shift
 - [ ] Build a demo web app for people to use it in realtime on web
-- [ ] E 
+- [ ] Enable custom parameter tuning
 - [ ] Improve the visual effect
 - [ ] Write a Medium post to explain the technical workflow
 - [ ] Draw a structure diagram
