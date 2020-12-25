@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import os
 
-path = r'C:\Users\v-tchou\OneDrive - Microsoft\Desktop\git\ML-auto-pitching-overlay\img\image1.jpg'
+path = r'D:/gitrepo/ML-auto-baseball-pitching-overlay/img/image1.jpg'
 img = cv2.imread(path)
 
 height, width, _ = img.shape
