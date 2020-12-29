@@ -87,6 +87,35 @@ def predict(infer, frame, input_size, iou, score_threshold):
     return boxes, scores, classes, valid_detections
 
 
+def distance(x, y):
+    temp = (x[0] - y[0]) ** 2 + (x[1] - y[1]) ** 2
+    return temp ** (0.5)
+
+
+def detected_to_tracked(detected, tracked, tracker_min_hits):
+    distance_threshold = 100
+    first_ball = tracked[0]
+    for untracked in detected[-(tracker_min_hits+1):]:
+        if(distance(untracked, first_ball) < distance_threshold):
+            untracked.append(first_ball[2])
+            tracked.append(untracked)
+
+
+def add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr):
+    modify_frames = frames[-(tracker_min_hits+1):]
+    balls_to_add = tracked_balls[-(tracker_min_hits+1):]
+    balls_to_add_temp = copy.deepcopy(balls_to_add)
+
+    for point in balls_to_add_temp:
+        del point[2]
+    balls_to_add_temp = np.array(balls_to_add_temp, dtype='int32')
+
+    for idx, frame in enumerate(modify_frames):
+        # print('Add to frame', [balls_to_add_temp[:idx+1]])
+        cv2.polylines(frame, [balls_to_add_temp[:idx+1]], False, clr, 22, lineType=cv2.LINE_AA)
+        frames[-((tracker_min_hits+1)-idx)] = frame
+
+
 def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tiny):
     print("Video from: ", video_path)
     vid = cv2.VideoCapture(video_path)
@@ -95,14 +124,16 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(vid.get(cv2.CAP_PROP_FPS))
 
+    tracker_min_hits = 4
     frame_id = 0
 
     track_colors = [(161, 235, 52), (161, 235, 52), (161, 235, 52), (235, 171, 52), (255, 235, 52), (255, 235, 52), (255, 235, 52), (210, 235, 52), (52, 235, 131), (52, 64, 235), (0, 0, 255), (0, 255, 255),
                     (255, 0, 127), (127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
 
     # Create Object Tracker
-    tracker = Sort(max_age=8, min_hits=3, iou_threshold=0.3)
-    balls = []
+    tracker = Sort(max_age=8, min_hits=tracker_min_hits, iou_threshold=0.3)
+    detected_balls = []
+    tracked_balls = []
     ball_frames = []
     frames = []
 
@@ -140,6 +171,8 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
                 centerY = int((coor[0] + coor[2]) / 2)
 
                 print(f'Baseball Detected ({centerX}, {centerY}), Confidence: {str(round(score, 2))}')
+                # cv2.circle(frame, (centerX, centerY), 10, (255, 0, 0), -1)
+                detected_balls.append([centerX, centerY])
                 detections.append(np.array([coor[1]-offset, coor[0]-offset, coor[3]+offset, coor[2]+offset, score]))
 
         if(len(detections) > 0):
@@ -162,11 +195,11 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
             clr = t[4] % 12
             centerX = int((t[0] + t[2]) / 2)
             centerY = int((t[1] + t[3]) / 2)
-            balls.append([centerX, centerY, t[4]])
+            tracked_balls.append([centerX, centerY, t[4]])
 
         # Draw the line
-        if(len(balls) > 0):
-            ball_points = copy.deepcopy(balls)
+        if(len(tracked_balls) > 0):
+            ball_points = copy.deepcopy(tracked_balls)
             for point in ball_points:
                 clr = track_colors[point[2] % 12]
                 del point[2]
@@ -175,8 +208,18 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
 
         # Store the frames with ball tracked
         if(len(trackings) > 0):
+
             if(len(ball_frames) == 0):
+                last_tracked_frame = frame_id
+                # detected_to_tracked(detected_balls, tracked_balls, tracker_min_hits)
+                # add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr)
+                # Add prior 20 frames before the first ball
                 ball_frames.extend(frames[-20:])
+
+            if(frame_id - last_tracked_frame > 1):
+                print('skip', frame_id - last_tracked_frame)
+                ball_frames.extend(frames[last_tracked_frame:frame_id])
+
             ball_frames.append(frame)
             last_tracked_frame = frame_id
 
