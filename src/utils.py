@@ -5,6 +5,8 @@ import cv2
 import numpy as np
 import copy
 import time
+import random
+import colorsys
 from skimage.registration import phase_cross_correlation
 from image_registration import cross_correlation_shifts, chi2_shift
 from scipy.ndimage import shift
@@ -12,30 +14,52 @@ from src.SORT_tracker.tracker import Tracker
 from src.SORT_tracker.sort import *
 
 
-def generate_overlay(frames, width, height, fps, outputPath):
+class FrameInfo:
+    def __init__(self, frame, ball_in_frame, ball=(0, 0)):
+        self.frame = frame
+        self.ball_in_frame = ball_in_frame
+        self.ball = ball
+
+
+def get_bright_color():
+    h, s, l = random.random(), 0.5 + random.random()/2.0, 0.4 + random.random()/5.0
+    r, g, b = [int(256*i) for i in colorsys.hls_to_rgb(h, l, s)]
+    return [r, g, b]
+
+
+def generate_overlay(video_frames, width, height, fps, outputPath):
     print('Saving overlay result to', outputPath)
-    frameLists = sorted(frames, key=len, reverse=True)
+    frame_lists = sorted(video_frames, key=len, reverse=True)
 
     codec = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(outputPath, codec, fps / 2, (width, height))
     shifts = {}
 
-    for idx, baseFrame in enumerate(frameLists[0]):
-        for listIdx, frameList in enumerate(frameLists[1:]):
+    for idx, base_frame in enumerate(frame_lists[0]):
+        # Overlay frames
+        for listIdx, frameList in enumerate(frame_lists[1:]):
             if(idx < len(frameList)):
-                overlayFrame = frameList[idx]
+                overlay_frame = frameList[idx]
             else:
-                overlayFrame = frameList[len(frameList) - 1]
+                overlay_frame = frameList[len(frameList) - 1]
 
             alpha = 1.0 / (listIdx + 2)
             beta = 1.0 - alpha
-            corrected_frame = image_registration(baseFrame, overlayFrame, shifts, listIdx, width, height)
-            # baseFrame = cv2.addWeighted(baseFrame, 1, corrected_frame, alpha, 0)
-            baseFrame = cv2.addWeighted(corrected_frame, alpha, baseFrame, beta, 0)
+            corrected_frame = image_registration(base_frame.frame, overlay_frame.frame, shifts, listIdx, width, height)
+            # base_frame = cv2.addWeighted(base_frame, 1, corrected_frame, alpha, 0)
+            result_frame = cv2.addWeighted(corrected_frame, alpha, base_frame.frame, beta, 0)
 
-        resultFrame = cv2.cvtColor(baseFrame, cv2.COLOR_RGB2BGR)
-        cv2.imshow('resultFrame', resultFrame)
-        out.write(resultFrame)
+            # Draw the non-opacity balls
+            if(overlay_frame.ball_in_frame):
+                cv2.circle(result_frame, overlay_frame.ball, 13, (255, 255, 255), -1)
+
+        # Draw the non-opacity balls
+        if(base_frame.ball_in_frame):
+            cv2.circle(result_frame, base_frame.ball, 13, (255, 255, 255), -1)
+
+        result_frame = cv2.cvtColor(result_frame, cv2.COLOR_RGB2BGR)
+        cv2.imshow('result_frame', result_frame)
+        out.write(result_frame)
         if cv2.waitKey(120) & 0xFF == ord('q'):
             break
 
@@ -110,8 +134,8 @@ def add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr):
 
     for idx, frame in enumerate(modify_frames):
         print('Add to frame', [balls_to_add_temp[:idx+1]])
-        cv2.polylines(frame, [balls_to_add_temp[:idx+1]], False, clr, 22, lineType=cv2.LINE_AA)
-        frames[-((tracker_min_hits+1)-idx)] = frame
+        cv2.polylines(frame.frame, [balls_to_add_temp[:idx+1]], False, clr, 22, lineType=cv2.LINE_AA)
+        frames[-((tracker_min_hits+1)-idx)] = FrameInfo(frame.frame, True, tuple(balls_to_add[idx][:-1]))
 
 
 def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tiny):
@@ -140,7 +164,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
         if return_value:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(frame)
-            frames.append(frame)
+            frames.append(FrameInfo(frame, False))
         else:
             if frame_id == vid.get(cv2.CAP_PROP_FRAME_COUNT):
                 print("Processing complete")
@@ -204,13 +228,11 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
             ball_points = np.array(ball_points, dtype='int32')
             cv2.polylines(frame, [ball_points], False, clr, 22, lineType=cv2.LINE_AA)
 
+            last_ball = tuple(tracked_balls[-1][:-1])
+            # cv2.circle(frame, tuple(last_ball), 13, (255, 255, 255), -1)
+
         # Store the frames with ball tracked
         if(len(trackings) > 0):
-
-            # Add lost frames
-            if(frame_id - last_tracked_frame > 1):
-                print('Lost frames:', frame_id - last_tracked_frame)
-                ball_frames.extend(frames[last_tracked_frame:frame_id])
 
             # At first track from SORT
             if(len(ball_frames) == 0):
@@ -220,7 +242,12 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
                 # Add prior 20 frames before the first ball
                 ball_frames.extend(frames[-20:])
 
-            ball_frames.append(frame)
+            # Add lost frames
+            if(frame_id - last_tracked_frame > 1):
+                print('Lost frames:', frame_id - last_tracked_frame)
+                ball_frames.extend(frames[last_tracked_frame:frame_id])
+
+            ball_frames.append(FrameInfo(frame, True, last_ball))
             last_tracked_frame = frame_id
 
         result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)

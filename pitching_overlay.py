@@ -24,7 +24,7 @@ if __name__ == '__main__':
     size = 416
     iou = 0.45
     score = 0.25
-    
+
     if(tiny):
         weights = './model/yolov4-tiny-baseball-416'
     else:
@@ -34,13 +34,14 @@ if __name__ == '__main__':
     saved_model_loaded = tf.saved_model.load(weights, tags=[tag_constants.SERVING])
     infer = saved_model_loaded.signatures['serving_default']
 
-    videoFrames = []
+    video_frames = []
+    video_balls = []
     rootDir = options.rootDir
     outputPath = rootDir + '/Overlay.avi'
 
     for idx, path in enumerate(os.listdir(rootDir)):
         print(f'Processing Video {idx + 1}')
         ball_frames, width, height, fps = getBallFrames(rootDir + '/' + path, size, infer, size, iou, score, tiny)
-        videoFrames.append(ball_frames)
+        video_frames.append(ball_frames)
 
-    generate_overlay(videoFrames, width, height, fps, outputPath)
+    generate_overlay(video_frames, width, height, fps, outputPath)
