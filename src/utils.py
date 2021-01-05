@@ -57,10 +57,10 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
             else:
                 overlay_frame = frameList[len(frameList) - 1]
             if(overlay_frame.ball_in_frame):
-                cv2.circle(bg_frame, overlay_frame.ball, 12, (255, 255, 255), -1)
+                cv2.circle(bg_frame, overlay_frame.ball, 13, (255, 255, 255), -1)
 
         if(base_frame.ball_in_frame):
-            cv2.circle(bg_frame, base_frame.ball, 12, (255, 255, 255), -1)
+            cv2.circle(bg_frame, base_frame.ball, 13, (255, 255, 255), -1)
 
         result_frame = cv2.cvtColor(bg_frame, cv2.COLOR_RGB2BGR)
         cv2.imshow('result_frame', result_frame)
@@ -141,7 +141,6 @@ def add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr):
     for idx, frame in enumerate(modify_frames):
         # print('Add to frame', [balls_to_add_temp[:idx+1]])
         cv2.polylines(frame.frame, [balls_to_add_temp[:idx+1]], False, clr, 22, lineType=cv2.LINE_AA)
-        cv2.circle(frame.frame, tuple(balls_to_add[idx][:-1]), 12, (255, 0, 0), -1)
         # print('Add', tuple(balls_to_add[idx][:-1]))
         frames[-((tracker_min_hits+1)-idx)] = FrameInfo(frame.frame, True, tuple(balls_to_add[idx][:-1]))
 
@@ -157,7 +156,9 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
     tracker_min_hits = 3
     frame_id = 0
 
-    track_colors = [(161, 235, 52), (161, 235, 52), (161, 235, 52), (235, 171, 52), (255, 235, 52), (255, 235, 52), (255, 235, 52), (210, 235, 52), (52, 235, 131), (52, 64, 235), (0, 0, 255), (0, 255, 255),
+    # track_colors = [(161, 235, 52), (161, 235, 52), (161, 235, 52), (235, 171, 52), (255, 235, 52), (255, 235, 52), (255, 235, 52), (210, 235, 52), (52, 235, 131), (52, 64, 235), (0, 0, 255), (0, 255, 255),
+    #                 (255, 0, 127), (127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
+    track_colors = [(161, 235, 52), (83, 254, 92), (255, 112, 52), (255, 112, 52), (255, 235, 52), (255, 235, 52), (255, 235, 52), (210, 235, 52), (52, 235, 131), (52, 64, 235), (0, 0, 255), (0, 255, 255),
                     (255, 0, 127), (127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
 
     # Create Object Tracker
@@ -220,7 +221,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
             start = (t[0], t[1])
             end = (t[2], t[3])
             # cv2.rectangle(frame, start, end, (255, 0, 0), 5)
-            cv2.putText(frame, str(t[4]), start, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255), 2, cv2.LINE_AA)
+            # cv2.putText(frame, str(t[4]), start, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255), 2, cv2.LINE_AA)
 
             clr = t[4] % 12
             centerX = int((t[0] + t[2]) / 2)
