@@ -29,11 +29,9 @@ def generate_overlay(frames, width, height, fps, outputPath):
 
             alpha = 1.0 / (listIdx + 2)
             beta = 1.0 - alpha
-            corrected_frame = image_registration(
-                baseFrame, overlayFrame, shifts, listIdx, width, height)
+            corrected_frame = image_registration(baseFrame, overlayFrame, shifts, listIdx, width, height)
             # baseFrame = cv2.addWeighted(baseFrame, 1, corrected_frame, alpha, 0)
-            baseFrame = cv2.addWeighted(
-                corrected_frame, alpha, baseFrame, beta, 0)
+            baseFrame = cv2.addWeighted(corrected_frame, alpha, baseFrame, beta, 0)
 
         resultFrame = cv2.cvtColor(baseFrame, cv2.COLOR_RGB2BGR)
         cv2.imshow('resultFrame', resultFrame)
@@ -111,7 +109,7 @@ def add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr):
     balls_to_add_temp = np.array(balls_to_add_temp, dtype='int32')
 
     for idx, frame in enumerate(modify_frames):
-        # print('Add to frame', [balls_to_add_temp[:idx+1]])
+        print('Add to frame', [balls_to_add_temp[:idx+1]])
         cv2.polylines(frame, [balls_to_add_temp[:idx+1]], False, clr, 22, lineType=cv2.LINE_AA)
         frames[-((tracker_min_hits+1)-idx)] = frame
 
@@ -124,7 +122,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(vid.get(cv2.CAP_PROP_FPS))
 
-    tracker_min_hits = 4
+    tracker_min_hits = 3
     frame_id = 0
 
     track_colors = [(161, 235, 52), (161, 235, 52), (161, 235, 52), (235, 171, 52), (255, 235, 52), (255, 235, 52), (255, 235, 52), (210, 235, 52), (52, 235, 131), (52, 64, 235), (0, 0, 255), (0, 255, 255),
@@ -209,16 +207,18 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
         # Store the frames with ball tracked
         if(len(trackings) > 0):
 
+            # Add lost frames
+            if(frame_id - last_tracked_frame > 1):
+                print('Lost frames:', frame_id - last_tracked_frame)
+                ball_frames.extend(frames[last_tracked_frame:frame_id])
+
+            # At first track from SORT
             if(len(ball_frames) == 0):
                 last_tracked_frame = frame_id
-                # detected_to_tracked(detected_balls, tracked_balls, tracker_min_hits)
-                # add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr)
+                detected_to_tracked(detected_balls, tracked_balls, tracker_min_hits)
+                add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr)
                 # Add prior 20 frames before the first ball
                 ball_frames.extend(frames[-20:])
-
-            if(frame_id - last_tracked_frame > 1):
-                print('skip', frame_id - last_tracked_frame)
-                ball_frames.extend(frames[last_tracked_frame:frame_id])
 
             ball_frames.append(frame)
             last_tracked_frame = frame_id
