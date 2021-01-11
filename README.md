@@ -1,5 +1,5 @@
 <p align=center>
-    <img src="img/2_balls.gif">
+    <img src="img/2_balls_smooth.gif">
 </p>
 
 <p align=center>
@@ -16,7 +16,7 @@
 
 This project takes your baseball pitching clips and **automatically** generates the overlay. A fine-tuned Yolov4 model is used to get the location of the ball. Then, I implemented SORT tracking algorithm to keep track of each individual ball. Lastly, I will apply some image registration techniques to deal with slight camera shift on each clip.
 
-I'm still trying to improve it! Feel free to follow this project, also check out the Todo list. 
+I'm still trying to improve it! Feel free to follow this project, also check out the Todo list.
 
 The idea came from [this incredible overlay](https://www.youtube.com/watch?v=jUbAAurrnwU&ab_channel=YuTubeKs).
 
@@ -28,7 +28,7 @@ These instructions will get you a copy of the project, and generates your own pi
 
 Get a copy of this project by simply running the git clone command.
 
-``` git
+```git
 git clone https://github.com/chonyy/ML-auto-baseball-pitching-overlay.git
 ```
 
@@ -36,7 +36,7 @@ git clone https://github.com/chonyy/ML-auto-baseball-pitching-overlay.git
 
 Before running the project, we have to install all the dependencies from requirements.txt
 
-``` pip
+```pip
 pip install -r requirements.txt
 ```
 
@@ -46,7 +46,7 @@ Last, run the project with your own clips!
 
 #### Try a sample
 
-``` python
+```python
 python pitching_overlay.py
 ```
 
@@ -54,7 +54,7 @@ python pitching_overlay.py
 
 Place your pitching videos in a folder, then specify the path in the CLI.
 
-``` python
+```python
 python pitching_overlay.py --videos_folder "./videos/videos"
 ```
 
@@ -75,9 +75,9 @@ python pitching_overlay.py --videos_folder "./videos/videos"
 
 ## ☑️ Todo
 
-- [X] Implement image registration to deal with camera shift
-- [ ] Build a demo web app for people to use it in realtime on web
-- [ ] Enable custom parameter tuning
-- [ ] Improve the visual effect
-- [ ] Write a Medium post to explain the technical workflow
-- [ ] Draw a structure diagram
+-   [x] Implement image registration to deal with camera shift
+-   [ ] Build a demo web app for people to use it in realtime on web
+-   [ ] Enable custom parameter tuning
+-   [ ] Improve the visual effect
+-   [ ] Write a Medium post to explain the technical workflow
+-   [ ] Draw a structure diagram
