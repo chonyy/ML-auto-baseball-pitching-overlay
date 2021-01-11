@@ -15,7 +15,7 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
 
     for idx, base_frame in enumerate(frame_lists[0]):
         # Overlay frames
-        bg_frame = base_frame.frame
+        background_frame = base_frame.frame.copy()
         for list_idx, frameList in enumerate(frame_lists[1:]):
             if(idx < len(frameList)):
                 overlay_frame = frameList[idx]
@@ -24,20 +24,23 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
 
             alpha = 1.0 / (list_idx + 2)
             beta = 1.0 - alpha
-            corrected_frame = image_registration(bg_frame, overlay_frame, shifts, list_idx, width, height)
-            bg_frame = cv2.addWeighted(corrected_frame, alpha, bg_frame, beta, 0)
+            corrected_frame = image_registration(background_frame, overlay_frame, shifts, list_idx, width, height)
+            background_frame = cv2.addWeighted(corrected_frame, alpha, background_frame, beta, 0)
 
             # Prepare balls to draw
             if(overlay_frame.ball_in_frame):
                 balls_in_curves[list_idx+1].append([overlay_frame.ball[0], overlay_frame.ball[1], overlay_frame.ball_color])
+
         if(base_frame.ball_in_frame):
             balls_in_curves[0].append([base_frame.ball[0], base_frame.ball[1], base_frame.ball_color])
 
+        background_frame = cv2.addWeighted(base_frame.frame, 0.25, background_frame, 0.75, 0)
+
         # Draw transparent curve and non-transparent balls
         for trajectory in balls_in_curves:
-            bg_frame = draw_ball_curve(bg_frame, trajectory)
+            background_frame = draw_ball_curve(background_frame, trajectory)
 
-        result_frame = cv2.cvtColor(bg_frame, cv2.COLOR_RGB2BGR)
+        result_frame = cv2.cvtColor(background_frame, cv2.COLOR_RGB2BGR)
         cv2.imshow('result_frame', result_frame)
         out.write(result_frame)
         if cv2.waitKey(60) & 0xFF == ord('q'):
