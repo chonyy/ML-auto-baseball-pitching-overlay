@@ -10,7 +10,7 @@ from PIL import Image
 from scipy.ndimage import shift
 
 from src.FrameInfo import FrameInfo
-from src.generate_overlay import generate_overlay
+from src.generate_overlay import generate_overlay, draw_ball_curve
 from src.SORT_tracker.sort import *
 from src.SORT_tracker.tracker import Tracker
 
@@ -75,7 +75,7 @@ def add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr):
 
     for idx, frame in enumerate(modify_frames):
         # print('Add to frame', [balls_to_add_temp[:idx+1]])
-        cv2.polylines(frame.frame, [balls_to_add_temp[:idx+1]], False, clr, 22, lineType=cv2.LINE_AA)
+        # cv2.polylines(frame.frame, [balls_to_add_temp[:idx+1]], False, clr, 22, lineType=cv2.LINE_AA)
         # print('Add', tuple(balls_to_add[idx][:-1]))
         frames[-((tracker_min_hits+1)-idx)] = FrameInfo(frame.frame, True, tuple(balls_to_add[idx][:-1]), clr)
 
@@ -154,25 +154,16 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
             t[3] = int(t[3])
             start = (t[0], t[1])
             end = (t[2], t[3])
-            cv2.rectangle(frame, start, end, (255, 0, 0), 5)
-            cv2.putText(frame, str(t[4]), start, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255), 2, cv2.LINE_AA)
+            # cv2.rectangle(frame, start, end, (255, 0, 0), 5)
+            # cv2.putText(frame, str(t[4]), start, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255), 2, cv2.LINE_AA)
 
-            clr = t[4] % 12
+            clr = track_colors[t[4] % 12]
             centerX = int((t[0] + t[2]) / 2)
             centerY = int((t[1] + t[3]) / 2)
-            tracked_balls.append([centerX, centerY, t[4]])
+            tracked_balls.append([centerX, centerY, track_colors[t[4] % 12]])
 
         # Draw the line
-        if(len(tracked_balls) > 0):
-            ball_points = copy.deepcopy(tracked_balls)
-            for point in ball_points:
-                clr = track_colors[point[2] % 12]
-                del point[2]
-            ball_points = np.array(ball_points, dtype='int32')
-            cv2.polylines(frame, [ball_points], False, clr, 22, lineType=cv2.LINE_AA)
-
-            last_ball = tuple(tracked_balls[-1][:-1])
-            cv2.circle(frame, tuple(last_ball), 12, (255, 255, 255), -1)
+        # draw_ball_curve(frame, tracked_balls)
 
         # Store the frames with ball tracked
         if(len(trackings) > 0):
@@ -181,6 +172,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
             if(len(ball_frames) == 0):
                 last_tracked_frame = frame_id
                 detected_to_tracked(detected_balls, tracked_balls, tracker_min_hits)
+                print('clr', clr)
                 add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr)
                 # Add prior 20 frames before the first ball
                 ball_frames.extend(frames[-20:])
@@ -188,8 +180,9 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
             # Add lost frames
             if(frame_id - last_tracked_frame > 1):
                 print('Lost frames:', frame_id - last_tracked_frame)
-                ball_frames.extend(frames[last_tracked_frame:frame_id])
+                ball_frames.extend(frames[last_tracked_frame: frame_id])
 
+            last_ball = tuple(tracked_balls[-1][:-1])
             ball_frames.append(FrameInfo(frame, True, last_ball, clr))
             last_tracked_frame = frame_id
 
