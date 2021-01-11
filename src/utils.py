@@ -1,17 +1,18 @@
+import colorsys
+import copy
+import random
 import time
-import tensorflow as tf
-from PIL import Image
+
 import cv2
 import numpy as np
-import copy
-import time
-import random
-import colorsys
-from skimage.registration import phase_cross_correlation
-from image_registration import cross_correlation_shifts, chi2_shift
+import tensorflow as tf
+from image_registration import chi2_shift, cross_correlation_shifts
+from PIL import Image
 from scipy.ndimage import shift
-from src.SORT_tracker.tracker import Tracker
+from skimage.registration import phase_cross_correlation
+
 from src.SORT_tracker.sort import *
+from src.SORT_tracker.tracker import Tracker
 
 
 class FrameInfo:
@@ -65,7 +66,7 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
         result_frame = cv2.cvtColor(bg_frame, cv2.COLOR_RGB2BGR)
         cv2.imshow('result_frame', result_frame)
         out.write(result_frame)
-        if cv2.waitKey(120) & 0xFF == ord('q'):
+        if cv2.waitKey(60) & 0xFF == ord('q'):
             break
 
 
@@ -220,8 +221,8 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
             t[3] = int(t[3])
             start = (t[0], t[1])
             end = (t[2], t[3])
-            # cv2.rectangle(frame, start, end, (255, 0, 0), 5)
-            # cv2.putText(frame, str(t[4]), start, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255), 2, cv2.LINE_AA)
+            cv2.rectangle(frame, start, end, (255, 0, 0), 5)
+            cv2.putText(frame, str(t[4]), start, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255), 2, cv2.LINE_AA)
 
             clr = t[4] % 12
             centerX = int((t[0] + t[2]) / 2)
