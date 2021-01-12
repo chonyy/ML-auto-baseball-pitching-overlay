@@ -1,5 +1,5 @@
 <p align=center>
-    <img src="img/cover-new.gif">
+    <img src="img/7-balls.gif">
 </p>
 
 <p align=center>
