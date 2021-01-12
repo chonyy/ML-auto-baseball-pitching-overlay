@@ -1,5 +1,5 @@
 <p align=center>
-    <img src="img/2_balls_new.gif">
+    <img src="img/cover-new.gif">
 </p>
 
 <p align=center>
@@ -66,6 +66,9 @@ python pitching_overlay.py --videos_folder "./videos/videos"
 
 ## 🎬 More Demo
 
+<p align=center>
+    <img src="img/2_balls_new.gif">
+</p>
 <p align=center>
     <img src="img/4-balls.gif">
 </p>
