@@ -8,6 +8,9 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
     print('Saving overlay result to', outputPath)
     frame_lists = sorted(video_frames, key=len, reverse=True)
 
+    for frame_list in frame_lists:
+        complement_lost_tracking(frame_list)
+
     balls_in_curves = [[] for i in range(len(frame_lists))]
     codec = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(outputPath, codec, fps / 2, (width, height))
@@ -34,7 +37,8 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
         if(base_frame.ball_in_frame):
             balls_in_curves[0].append([base_frame.ball[0], base_frame.ball[1], base_frame.ball_color])
 
-        background_frame = cv2.addWeighted(base_frame.frame, 0.25, background_frame, 0.75, 0)
+        # Emphasize base frame
+        # background_frame = cv2.addWeighted(base_frame.frame, 0.5, background_frame, 0.5, 0)
 
         # Draw transparent curve and non-transparent balls
         for trajectory in balls_in_curves:
@@ -63,7 +67,7 @@ def image_registration(ref_image, offset_image, shifts, list_idx, width, height)
 
 
 def draw_ball_curve(frame, trajectory):
-    trajectory_weight = 0.75
+    trajectory_weight = 0.7
     temp_frame = frame.copy()
 
     if(len(trajectory)):
@@ -78,3 +82,53 @@ def draw_ball_curve(frame, trajectory):
         last_ball = tuple(trajectory[-1][:-1])
         cv2.circle(frame, tuple(last_ball), 13, (255, 255, 255), -1)
     return frame
+
+
+def complement_lost_tracking(frame_list):
+    balls_x = [frame.ball[0] for frame in frame_list if frame.ball_in_frame]
+    balls_y = [frame.ball[1] for frame in frame_list if frame.ball_in_frame]
+
+    curve = np.polyfit(balls_x, balls_y, 2)
+    poly = np.poly1d(curve)
+
+    lost_sections = []
+    in_lost = False
+    frame_count = 0
+
+    for idx, frame in enumerate(frame_list):
+        # print(idx, frame.ball)
+        if(frame.ball_lost_tracking and frame_count == 0):
+            in_lost = True
+            lost_sections.append([])
+
+        if(in_lost and not(frame.ball_lost_tracking)):
+            in_lost = False
+            frame_count = 0
+
+        if(in_lost):
+            lost_sections[-1].append(idx)
+            frame_count += 1
+
+    print('sections', lost_sections)
+
+    for lost_idx in lost_sections:
+        if(lost_idx):
+            prev_frame = frame_list[lost_idx[0]-1]
+            last_frame = frame_list[lost_idx[-1]+1]
+            clr = prev_frame.ball_color
+
+            lost = [frame_list[i] for i in lost_idx]
+
+            diff = last_frame.ball[0] - prev_frame.ball[0]
+            # print(last_frame.ball[0])
+            # print(prev_frame.ball[0])
+            speed = int(diff / (len(lost)+1))
+            print('speed', speed)
+
+            for idx, frame in enumerate(lost):
+                x = prev_frame.ball[0] + (speed * (idx+1))
+                y = int(poly(x))
+                frame.ball_in_frame = True
+                frame.ball = (x, y)
+                frame.ball_color = clr
+                print('Add', x, y)

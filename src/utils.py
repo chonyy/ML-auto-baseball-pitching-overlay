@@ -180,8 +180,12 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
             # Add lost frames
             if(frame_id - last_tracked_frame > 1):
                 print('Lost frames:', frame_id - last_tracked_frame)
-                ball_frames.extend(frames[last_tracked_frame: frame_id])
+                frames_to_add = frames[last_tracked_frame: frame_id]
+                for ball_frame in frames_to_add:
+                    ball_frame.ball_lost_tracking = True
+                ball_frames.extend(frames_to_add)
 
+            # Add balls
             last_ball = tuple(tracked_balls[-1][:-1])
             ball_frames.append(FrameInfo(frame, True, last_ball, clr))
             last_tracked_frame = frame_id
