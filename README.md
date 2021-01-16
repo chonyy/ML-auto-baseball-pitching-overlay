@@ -77,6 +77,9 @@ python pitching_overlay.py --videos_folder "./videos/videos"
 <p align=center>
     <img src="img/3-balls-new.gif">
 </p>
+<p align=center>
+    <img src="img/3-balls-diff.gif">
+</p>
 
 ## ☑️ Todo
 
