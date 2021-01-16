@@ -1,5 +1,5 @@
 <p align=center>
-    <img src="img/7-balls.gif">
+    <img src="img/7-balls-new.gif">
 </p>
 
 <p align=center>
@@ -12,9 +12,11 @@
     <a target="_blank" href="http://makeapullrequest.com" title="PRs Welcome"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></a>
 </p>
 
-> ⚾ Overlaying pitch motion and trajectory automatically with machine learning!
+> ⚾ Automatically overlaying pitch motion and trajectory with machine learning!
 
-This project takes your baseball pitching clips and **automatically** generates the overlay. A fine-tuned Yolov4 model is used to get the location of the ball. Then, I implemented SORT tracking algorithm to keep track of each individual ball. Lastly, I will apply some image registration techniques to deal with slight camera shift on each clip.
+This project takes your baseball pitching clips and **automatically** generates the overlay. The input pitching clip could be directly from your phone or camera. The release point will be automatically detected by the program. This system will trace the trajectory and align all the videos to generate the overlay.
+
+A fine-tuned YOLOv4 model is used to get the location of the ball. Then, I implemented SORT tracking algorithm to keep track of each individual ball. Lastly, I have applied some image registration techniques to deal with slight camera shift on each clip.
 
 I'm still trying to improve it! Feel free to follow this project, also check out the Todo list.
 
@@ -73,7 +75,7 @@ python pitching_overlay.py --videos_folder "./videos/videos"
     <img src="img/4-balls.gif">
 </p>
 <p align=center>
-    <img src="img/3-balls.gif">
+    <img src="img/3-balls-new.gif">
 </p>
 
 ## ☑️ Todo
