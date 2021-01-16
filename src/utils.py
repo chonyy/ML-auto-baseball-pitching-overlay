@@ -11,7 +11,7 @@ from scipy.ndimage import shift
 
 from src.FrameInfo import FrameInfo
 from src.generate_overlay import generate_overlay, draw_ball_curve
-from src.SORT_tracker.sort import *
+from src.SORT_tracker.sort import Sort
 from src.SORT_tracker.tracker import Tracker
 
 
@@ -20,7 +20,7 @@ from src.SORT_tracker.tracker import Tracker
 #     r, g, b = [int(256*i) for i in colorsys.hls_to_rgb(h, l, s)]
 #     return [r, g, b]
 
-
+# Tensorflow Object Detection API Sample
 def predict(infer, frame, input_size, iou, score_threshold):
     image_data = cv2.resize(frame, (input_size, input_size))
     image_data = image_data / 255.
@@ -64,7 +64,7 @@ def detected_to_tracked(detected, tracked, tracker_min_hits):
             tracked.append(untracked)
 
 
-def add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr):
+def add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, color):
     modify_frames = frames[-(tracker_min_hits+1):]
     balls_to_add = tracked_balls[-(tracker_min_hits+1):]
     balls_to_add_temp = copy.deepcopy(balls_to_add)
@@ -74,13 +74,11 @@ def add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr):
     balls_to_add_temp = np.array(balls_to_add_temp, dtype='int32')
 
     for idx, frame in enumerate(modify_frames):
-        # print('Add to frame', [balls_to_add_temp[:idx+1]])
-        # cv2.polylines(frame.frame, [balls_to_add_temp[:idx+1]], False, clr, 22, lineType=cv2.LINE_AA)
-        # print('Add', tuple(balls_to_add[idx][:-1]))
-        frames[-((tracker_min_hits+1)-idx)] = FrameInfo(frame.frame, True, tuple(balls_to_add[idx][:-1]), clr)
+        cv2.polylines(frame.frame, [balls_to_add_temp[:idx+1]], False, color, 22, lineType=cv2.LINE_AA)
+        frames[-((tracker_min_hits+1)-idx)] = FrameInfo(frame.frame, True, tuple(balls_to_add[idx][:-1]), color)
 
 
-def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tiny):
+def get_ball_frames(video_path, infer, input_size, iou, score_threshold):
     print("Video from: ", video_path)
     vid = cv2.VideoCapture(video_path)
 
@@ -91,8 +89,6 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
     tracker_min_hits = 3
     frame_id = 0
 
-    # track_colors = [(161, 235, 52), (161, 235, 52), (161, 235, 52), (235, 171, 52), (255, 235, 52), (255, 235, 52), (255, 235, 52), (210, 235, 52), (52, 235, 131), (52, 64, 235), (0, 0, 255), (0, 255, 255),
-    #                 (255, 0, 127), (127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
     track_colors = [(161, 235, 52), (83, 254, 92), (255, 112, 52), (161, 235, 52), (255, 235, 52), (255, 38, 38), (255, 235, 52), (210, 235, 52), (52, 235, 131), (52, 64, 235), (0, 0, 255), (0, 255, 255),
                     (255, 0, 127), (127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
 
@@ -113,7 +109,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
             if frame_id == vid.get(cv2.CAP_PROP_FRAME_COUNT):
                 print("Processing complete")
                 break
-            raise ValueError("Something went wrong! Try with another video format")
+            raise ValueError("Something went wrong! Only MP4 format is accepted.")
 
         boxes, scores, classes, valid_detections = predict(
             infer, frame, input_size, iou, score_threshold)
@@ -123,6 +119,7 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
         offset = 30
         accuracyThreshold = 0.95
 
+        # Get the Coordinates from object detection
         for i in range(valid_detections[0]):
             score = scores[0][i]
             if(score > accuracyThreshold):
@@ -157,23 +154,22 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
             # cv2.rectangle(frame, start, end, (255, 0, 0), 5)
             # cv2.putText(frame, str(t[4]), start, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255), 2, cv2.LINE_AA)
 
-            clr = track_colors[t[4] % 12]
+            color = track_colors[t[4] % 12]
             centerX = int((t[0] + t[2]) / 2)
             centerY = int((t[1] + t[3]) / 2)
             tracked_balls.append([centerX, centerY, track_colors[t[4] % 12]])
 
         # Draw the line
-        # draw_ball_curve(frame, tracked_balls)
+        draw_ball_curve(frame, tracked_balls)
 
         # Store the frames with ball tracked
         if(len(trackings) > 0):
 
-            # At first track from SORT
+            # Only run at the first track from SORT
             if(len(ball_frames) == 0):
                 last_tracked_frame = frame_id
                 detected_to_tracked(detected_balls, tracked_balls, tracker_min_hits)
-                print('clr', clr)
-                add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, clr)
+                add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, color)
                 # Add prior 20 frames before the first ball
                 ball_frames.extend(frames[-20:])
 
@@ -185,9 +181,9 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
                     ball_frame.ball_lost_tracking = True
                 ball_frames.extend(frames_to_add)
 
-            # Add balls
+            # Append the frame with detected ball location
             last_ball = tuple(tracked_balls[-1][:-1])
-            ball_frames.append(FrameInfo(frame, True, last_ball, clr))
+            ball_frames.append(FrameInfo(frame, True, last_ball, color))
             last_tracked_frame = frame_id
 
         result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -198,6 +194,6 @@ def getBallFrames(video_path, input_size, infer, size, iou, score_threshold, tin
 
         frame_id += 1
 
-    # Add five more frames after catching
+    # Add five more frames after the last tracked frame
     ball_frames.extend(frames[last_tracked_frame: last_tracked_frame+5])
     return ball_frames, width, height, fps
