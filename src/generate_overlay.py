@@ -38,7 +38,8 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
             balls_in_curves[0].append([base_frame.ball[0], base_frame.ball[1], base_frame.ball_color])
 
         # Emphasize base frame
-        # background_frame = cv2.addWeighted(base_frame.frame, 0.5, background_frame, 0.5, 0)
+        base_frame_weight = 0.55
+        background_frame = cv2.addWeighted(base_frame.frame, base_frame_weight, background_frame, 1-base_frame_weight, 0)
 
         # Draw transparent curve and non-transparent balls
         for trajectory in balls_in_curves:
@@ -109,7 +110,7 @@ def complement_lost_tracking(frame_list):
             lost_sections[-1].append(idx)
             frame_count += 1
 
-    print('sections', lost_sections)
+    # print('sections', lost_sections)
 
     for lost_idx in lost_sections:
         if(lost_idx):
