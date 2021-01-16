@@ -21,7 +21,7 @@ from src.SORT_tracker.tracker import Tracker
 #     return [r, g, b]
 
 # Tensorflow Object Detection API Sample
-def predict(infer, frame, input_size, iou, score_threshold):
+def detect(infer, frame, input_size, iou, score_threshold, detected_balls):
     image_data = cv2.resize(frame, (input_size, input_size))
     image_data = image_data / 255.
     image_data = image_data[np.newaxis, ...].astype(np.float32)
@@ -47,7 +47,29 @@ def predict(infer, frame, input_size, iou, score_threshold):
     classes = classes.numpy()
     valid_detections = valid_detections.numpy()
 
-    return boxes, scores, classes, valid_detections
+    offset = 30
+    accuracyThreshold = 0.95
+    frame_h, frame_w, _ = frame.shape
+    detections = []
+
+    for i in range(valid_detections[0]):
+        score = scores[0][i]
+        if(score > accuracyThreshold):
+            coor = boxes[0][i]
+            coor[0] = (coor[0] * frame_h)
+            coor[2] = (coor[2] * frame_h)
+            coor[1] = (coor[1] * frame_w)
+            coor[3] = (coor[3] * frame_w)
+
+            centerX = int((coor[1] + coor[3]) / 2)
+            centerY = int((coor[0] + coor[2]) / 2)
+
+            print(f'Baseball Detected ({centerX}, {centerY}), Confidence: {str(round(score, 2))}')
+            # cv2.circle(frame, (centerX, centerY), 10, (255, 0, 0), -1)
+            detected_balls.append([centerX, centerY])
+            detections.append(np.array([coor[1]-offset, coor[0]-offset, coor[3]+offset, coor[2]+offset, score]))
+
+    return detections
 
 
 def distance(x, y):
@@ -55,18 +77,20 @@ def distance(x, y):
     return temp ** (0.5)
 
 
-def detected_to_tracked(detected, tracked, tracker_min_hits):
+def add_balls_before_SORT(frames, detected, tracked, tracker_min_hits):
     distance_threshold = 100
     first_ball = tracked[0]
+    color = first_ball[2]
+    balls_to_add = []
+
+    # Get the untracked balls that's close enough to the first tracked ball
     for untracked in detected[-(tracker_min_hits+1):]:
         if(distance(untracked, first_ball) < distance_threshold):
             untracked.append(first_ball[2])
-            tracked.append(untracked)
+            balls_to_add.append(untracked)
 
-
-def add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, color):
+    # Add the untracked balls to frame
     modify_frames = frames[-(tracker_min_hits+1):]
-    balls_to_add = tracked_balls[-(tracker_min_hits+1):]
     balls_to_add_temp = copy.deepcopy(balls_to_add)
 
     for point in balls_to_add_temp:
@@ -74,8 +98,8 @@ def add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, color):
     balls_to_add_temp = np.array(balls_to_add_temp, dtype='int32')
 
     for idx, frame in enumerate(modify_frames):
-        cv2.polylines(frame.frame, [balls_to_add_temp[:idx+1]], False, color, 22, lineType=cv2.LINE_AA)
-        frames[-((tracker_min_hits+1)-idx)] = FrameInfo(frame.frame, True, tuple(balls_to_add[idx][:-1]), color)
+        # cv2.polylines(frame.frame, [balls_to_add_temp[:idx+1]], False, color, 22, lineType=cv2.LINE_AA)
+        frames[-((tracker_min_hits+1)-idx)] = FrameInfo(frame.frame, True, tuple(balls_to_add_temp[idx]), color)
 
 
 def get_ball_frames(video_path, infer, input_size, iou, score_threshold):
@@ -103,7 +127,6 @@ def get_ball_frames(video_path, infer, input_size, iou, score_threshold):
         return_value, frame = vid.read()
         if return_value:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            image = Image.fromarray(frame)
             frames.append(FrameInfo(frame, False))
         else:
             if frame_id == vid.get(cv2.CAP_PROP_FRAME_COUNT):
@@ -111,31 +134,8 @@ def get_ball_frames(video_path, infer, input_size, iou, score_threshold):
                 break
             raise ValueError("Something went wrong! Only MP4 format is accepted.")
 
-        boxes, scores, classes, valid_detections = predict(
-            infer, frame, input_size, iou, score_threshold)
-
-        frame_h, frame_w, _ = frame.shape
-        detections = []
-        offset = 30
-        accuracyThreshold = 0.95
-
-        # Get the Coordinates from object detection
-        for i in range(valid_detections[0]):
-            score = scores[0][i]
-            if(score > accuracyThreshold):
-                coor = boxes[0][i]
-                coor[0] = (coor[0] * frame_h)
-                coor[2] = (coor[2] * frame_h)
-                coor[1] = (coor[1] * frame_w)
-                coor[3] = (coor[3] * frame_w)
-
-                centerX = int((coor[1] + coor[3]) / 2)
-                centerY = int((coor[0] + coor[2]) / 2)
-
-                print(f'Baseball Detected ({centerX}, {centerY}), Confidence: {str(round(score, 2))}')
-                # cv2.circle(frame, (centerX, centerY), 10, (255, 0, 0), -1)
-                detected_balls.append([centerX, centerY])
-                detections.append(np.array([coor[1]-offset, coor[0]-offset, coor[3]+offset, coor[2]+offset, score]))
+        # Detect the baseball in the frame
+        detections = detect(infer, frame, input_size, iou, score_threshold, detected_balls)
 
         if(len(detections) > 0):
             trackings = tracker.update(np.array(detections))
@@ -144,11 +144,7 @@ def get_ball_frames(video_path, infer, input_size, iou, score_threshold):
 
         # Add the valid trackings to balls_list
         for t in trackings:
-            t = t.astype('int32')
-            t[0] = int(t[0])
-            t[1] = int(t[1])
-            t[2] = int(t[2])
-            t[3] = int(t[3])
+            t = [int(i) for i in t]
             start = (t[0], t[1])
             end = (t[2], t[3])
             # cv2.rectangle(frame, start, end, (255, 0, 0), 5)
@@ -168,9 +164,8 @@ def get_ball_frames(video_path, infer, input_size, iou, score_threshold):
             # Only run at the first track from SORT
             if(len(ball_frames) == 0):
                 last_tracked_frame = frame_id
-                detected_to_tracked(detected_balls, tracked_balls, tracker_min_hits)
-                add_new_tracked_to_frame(frames, tracked_balls, tracker_min_hits, color)
-                # Add prior 20 frames before the first ball
+                add_balls_before_SORT(frames, detected_balls, tracked_balls, tracker_min_hits)
+                # Add prior 20 frames before the first balsadl
                 ball_frames.extend(frames[-20:])
 
             # Add lost frames

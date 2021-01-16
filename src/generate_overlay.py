@@ -1,13 +1,15 @@
 import cv2
 import numpy as np
 import copy
-from image_registration import chi2_shift, cross_correlation_shifts
+from image_registration import cross_correlation_shifts
+from src.FrameInfo import FrameInfo
 
 
 def generate_overlay(video_frames, width, height, fps, outputPath):
     print('Saving overlay result to', outputPath)
     frame_lists = sorted(video_frames, key=len, reverse=True)
 
+    # Use Polyfit to approximate the untracked balls
     for frame_list in frame_lists:
         complement_lost_tracking(frame_list)
 
@@ -16,6 +18,7 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
     out = cv2.VideoWriter(outputPath, codec, fps / 2, (width, height))
     shifts = {}
 
+    # Take the longest frames as background
     for idx, base_frame in enumerate(frame_lists[0]):
         # Overlay frames
         background_frame = base_frame.frame.copy()
@@ -53,6 +56,7 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
 
 
 def image_registration(ref_image, offset_image, shifts, list_idx, width, height):
+    # The shift is calculated once for each video and stored
     if(list_idx not in shifts):
         xoff, yoff = cross_correlation_shifts(
             ref_image[:, :, 0], offset_image.frame[:, :, 0])
@@ -74,10 +78,10 @@ def draw_ball_curve(frame, trajectory):
     if(len(trajectory)):
         ball_points = copy.deepcopy(trajectory)
         for point in ball_points:
-            clr = point[2]
+            color = point[2]
             del point[2]
         ball_points = np.array(ball_points, dtype='int32')
-        cv2.polylines(temp_frame, [ball_points], False, clr, 22, lineType=cv2.LINE_AA)
+        cv2.polylines(temp_frame, [ball_points], False, color, 22, lineType=cv2.LINE_AA)
         frame = cv2.addWeighted(temp_frame, trajectory_weight, frame, 1-trajectory_weight, 0)
 
         last_ball = tuple(trajectory[-1][:-1])
@@ -89,6 +93,7 @@ def complement_lost_tracking(frame_list):
     balls_x = [frame.ball[0] for frame in frame_list if frame.ball_in_frame]
     balls_y = [frame.ball[1] for frame in frame_list if frame.ball_in_frame]
 
+    # Get the polynomial equation
     curve = np.polyfit(balls_x, balls_y, 2)
     poly = np.poly1d(curve)
 
@@ -96,8 +101,8 @@ def complement_lost_tracking(frame_list):
     in_lost = False
     frame_count = 0
 
+    # Get the sections where the ball is lost tracked
     for idx, frame in enumerate(frame_list):
-        # print(idx, frame.ball)
         if(frame.ball_lost_tracking and frame_count == 0):
             in_lost = True
             lost_sections.append([])
@@ -110,26 +115,21 @@ def complement_lost_tracking(frame_list):
             lost_sections[-1].append(idx)
             frame_count += 1
 
-    # print('sections', lost_sections)
+    # Modify the frames in lost section with the approximated ball
+    for lost_section in lost_sections:
+        if(lost_section):
+            prev_frame = frame_list[lost_section[0]-1]
+            last_frame = frame_list[lost_section[-1]+1]
+            color = prev_frame.ball_color
 
-    for lost_idx in lost_sections:
-        if(lost_idx):
-            prev_frame = frame_list[lost_idx[0]-1]
-            last_frame = frame_list[lost_idx[-1]+1]
-            clr = prev_frame.ball_color
+            lost_idx = [frame_list[i] for i in lost_section]
 
-            lost = [frame_list[i] for i in lost_idx]
-
+            # Speed is the x difference for each frame
             diff = last_frame.ball[0] - prev_frame.ball[0]
-            # print(last_frame.ball[0])
-            # print(prev_frame.ball[0])
-            speed = int(diff / (len(lost)+1))
-            print('speed', speed)
+            speed = int(diff / (len(lost_idx)+1))
 
-            for idx, frame in enumerate(lost):
+            for idx, frame in enumerate(lost_idx):
                 x = prev_frame.ball[0] + (speed * (idx+1))
                 y = int(poly(x))
-                frame.ball_in_frame = True
-                frame.ball = (x, y)
-                frame.ball_color = clr
+                frame = FrameInfo(frame.frame, True, (x, y), color)
                 print('Add', x, y)
