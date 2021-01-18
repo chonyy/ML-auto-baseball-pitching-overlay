@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import copy
 from image_registration import cross_correlation_shifts
+from src.utils import draw_ball_curve
 from src.FrameInfo import FrameInfo
 
 
@@ -69,24 +70,6 @@ def image_registration(ref_image, offset_image, shifts, list_idx, width, height)
     corrected_image = cv2.warpAffine(offset_image.frame, matrix, (width, height))
 
     return corrected_image
-
-
-def draw_ball_curve(frame, trajectory):
-    trajectory_weight = 0.7
-    temp_frame = frame.copy()
-
-    if(len(trajectory)):
-        ball_points = copy.deepcopy(trajectory)
-        for point in ball_points:
-            color = point[2]
-            del point[2]
-        ball_points = np.array(ball_points, dtype='int32')
-        cv2.polylines(temp_frame, [ball_points], False, color, 22, lineType=cv2.LINE_AA)
-        frame = cv2.addWeighted(temp_frame, trajectory_weight, frame, 1-trajectory_weight, 0)
-
-        last_ball = tuple(trajectory[-1][:-1])
-        cv2.circle(frame, tuple(last_ball), 13, (255, 255, 255), -1)
-    return frame
 
 
 def fill_lost_tracking(frame_list):

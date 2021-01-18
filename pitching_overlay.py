@@ -1,6 +1,7 @@
 from tensorflow.python.saved_model import tag_constants
 from optparse import OptionParser
-from src.utils import get_ball_frames, generate_overlay
+from src.get_pitch_frames import get_pitch_frames
+from src.generate_overlay import generate_overlay
 import os
 import sys
 import warnings
@@ -24,28 +25,25 @@ if __name__ == '__main__':
     (options, args) = optparser.parse_args()
 
     # Initialize variables
-    tiny = True
     size = 416
     iou = 0.45
     score = 0.5
-
-    if(tiny):
-        weights = './model/yolov4-tiny-baseball-416'
-    else:
-        weights = './model/yolov4-custom-416'
+    weights = './model/yolov4-tiny-baseball-416'
 
     # Load pretrained model
     saved_model_loaded = tf.saved_model.load(weights, tags=[tag_constants.SERVING])
     infer = saved_model_loaded.signatures['serving_default']
 
-    video_frames = []
     rootDir = options.rootDir
     outputPath = rootDir + '/Overlay.avi'
+    # Store the pitch frames and ball location of each video
+    pitch_frames = []
 
     # Iterate all videos in the folder
     for idx, path in enumerate(os.listdir(rootDir)):
         print(f'Processing Video {idx + 1}')
-        ball_frames, width, height, fps = get_ball_frames(rootDir + '/' + path, infer, size, iou, score)
-        video_frames.append(ball_frames)
+        video_path = rootDir + '/' + path
+        ball_frames, width, height, fps = get_pitch_frames(video_path, infer, size, iou, score)
+        pitch_frames.append(ball_frames)
 
-    generate_overlay(video_frames, width, height, fps, outputPath)
+    generate_overlay(pitch_frames, width, height, fps, outputPath)
