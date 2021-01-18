@@ -1,11 +1,11 @@
-from tensorflow.python.saved_model import tag_constants
-from optparse import OptionParser
-from src.get_pitch_frames import get_pitch_frames
-from src.generate_overlay import generate_overlay
 import os
 import sys
 import warnings
 import tensorflow as tf
+from tensorflow.python.saved_model import tag_constants
+from optparse import OptionParser
+from src.get_pitch_frames import get_pitch_frames
+from src.generate_overlay import generate_overlay
 
 # Ignore warnings
 if not sys.warnoptions:
