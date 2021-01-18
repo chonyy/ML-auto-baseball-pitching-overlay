@@ -65,7 +65,7 @@ def detect(infer, frame, input_size, iou, score_threshold, detected_balls):
             centerY = int((coor[0] + coor[2]) / 2)
 
             print(f'Baseball Detected ({centerX}, {centerY}), Confidence: {str(round(score, 2))}')
-            # cv2.circle(frame, (centerX, centerY), 10, (255, 0, 0), -1)
+            cv2.circle(frame, (centerX, centerY), 15, (255, 0, 0), -1)
             detected_balls.append([centerX, centerY])
             detections.append(np.array([coor[1]-offset, coor[0]-offset, coor[3]+offset, coor[2]+offset, score]))
 
@@ -86,7 +86,7 @@ def add_balls_before_SORT(frames, detected, tracked, tracker_min_hits):
     # Get the untracked balls that's close enough to the first tracked ball
     for untracked in detected[-(tracker_min_hits+1):]:
         if(distance(untracked, first_ball) < distance_threshold):
-            untracked.append(first_ball[2])
+            untracked.append(color)
             balls_to_add.append(untracked)
 
     # Add the untracked balls to frame
@@ -110,18 +110,18 @@ def get_ball_frames(video_path, infer, input_size, iou, score_threshold):
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(vid.get(cv2.CAP_PROP_FPS))
 
-    tracker_min_hits = 3
-    frame_id = 0
-
     track_colors = [(161, 235, 52), (83, 254, 92), (255, 112, 52), (161, 235, 52), (255, 235, 52), (255, 38, 38), (255, 235, 52), (210, 235, 52), (52, 235, 131), (52, 64, 235), (0, 0, 255), (0, 255, 255),
                     (255, 0, 127), (127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
 
-    # Create Object Tracker
-    tracker = Sort(max_age=8, min_hits=tracker_min_hits, iou_threshold=0.3)
     detected_balls = []
     tracked_balls = []
     ball_frames = []
     frames = []
+    tracker_min_hits = 3
+    frame_id = 0
+
+    # Create Object Tracker
+    tracker = Sort(max_age=8, min_hits=tracker_min_hits, iou_threshold=0.3)
 
     while True:
         return_value, frame = vid.read()
@@ -137,6 +137,7 @@ def get_ball_frames(video_path, infer, input_size, iou, score_threshold):
         # Detect the baseball in the frame
         detections = detect(infer, frame, input_size, iou, score_threshold, detected_balls)
 
+        # Feed in detections to obtain SORT tracking
         if(len(detections) > 0):
             trackings = tracker.update(np.array(detections))
         else:
@@ -153,7 +154,7 @@ def get_ball_frames(video_path, infer, input_size, iou, score_threshold):
             color = track_colors[t[4] % 12]
             centerX = int((t[0] + t[2]) / 2)
             centerY = int((t[1] + t[3]) / 2)
-            tracked_balls.append([centerX, centerY, track_colors[t[4] % 12]])
+            tracked_balls.append([centerX, centerY, color])
 
         # Draw the line
         draw_ball_curve(frame, tracked_balls)

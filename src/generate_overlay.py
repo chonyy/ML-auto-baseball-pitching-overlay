@@ -11,7 +11,7 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
 
     # Use Polyfit to approximate the untracked balls
     for frame_list in frame_lists:
-        complement_lost_tracking(frame_list)
+        fill_lost_tracking(frame_list)
 
     balls_in_curves = [[] for i in range(len(frame_lists))]
     codec = cv2.VideoWriter_fourcc(*'XVID')
@@ -89,7 +89,7 @@ def draw_ball_curve(frame, trajectory):
     return frame
 
 
-def complement_lost_tracking(frame_list):
+def fill_lost_tracking(frame_list):
     balls_x = [frame.ball[0] for frame in frame_list if frame.ball_in_frame]
     balls_y = [frame.ball[1] for frame in frame_list if frame.ball_in_frame]
 
