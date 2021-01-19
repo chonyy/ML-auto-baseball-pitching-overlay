@@ -2,15 +2,13 @@ import colorsys
 import copy
 import random
 import time
-
 import cv2
 import numpy as np
 import tensorflow as tf
 from PIL import Image
 from scipy.ndimage import shift
-
 from src.FrameInfo import FrameInfo
-from src.utils import distance
+from src.utils import distance, fill_lost_tracking
 from src.generate_overlay import generate_overlay, draw_ball_curve
 from src.SORT_tracker.sort import Sort
 from src.SORT_tracker.tracker import Tracker
@@ -28,9 +26,10 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
     track_colors = [(161, 235, 52), (83, 254, 92), (255, 112, 52), (161, 235, 52), (255, 235, 52), (255, 38, 38), (255, 235, 52), (210, 235, 52), (52, 235, 131), (52, 64, 235), (0, 0, 255), (0, 255, 255),
                     (255, 0, 127), (127, 0, 127), (255, 127, 255), (127, 0, 255), (255, 255, 0), (255, 0, 0), (0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (50, 100, 150), (10, 50, 150), (120, 20, 220)]
 
+    # Store the pitching section in pitch_frames
+    pitch_frames = []
     detected_balls = []
     tracked_balls = []
-    ball_frames = []
     frames = []
     tracker_min_hits = 3
     frame_id = 0
@@ -74,18 +73,18 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
         # Store the frames with ball tracked
         if(len(trackings) > 0):
             # Only run at the first track from SORT
-            if(len(ball_frames) == 0):
+            if(len(pitch_frames) == 0):
                 last_tracked_frame = frame_id
                 add_balls_before_SORT(frames, detected_balls, tracked_balls, tracker_min_hits)
                 # Add prior 20 frames before the first balsadl
-                ball_frames.extend(frames[-20:])
+                pitch_frames.extend(frames[-20:])
 
             # Add lost frames if any
-            add_lost_frames(frame_id, last_tracked_frame, frames, ball_frames)
+            add_lost_frames(frame_id, last_tracked_frame, frames, pitch_frames)
 
             # Append the frame with detected ball location
             last_ball = tuple(tracked_balls[-1][:-1])
-            ball_frames.append(FrameInfo(frame, True, last_ball, color))
+            pitch_frames.append(FrameInfo(frame, True, last_ball, color))
             last_tracked_frame = frame_id
 
         result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -96,9 +95,11 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
 
         frame_id += 1
 
+    # Use Polyfit to approximate the untracked balls
+    fill_lost_tracking(pitch_frames)
     # Add five more frames after the last tracked frame
-    ball_frames.extend(frames[last_tracked_frame: last_tracked_frame+5])
-    return ball_frames, width, height, fps
+    pitch_frames.extend(frames[last_tracked_frame: last_tracked_frame+5])
+    return pitch_frames, width, height, fps
 
 
 # Tensorflow Object Detection API Sample
@@ -178,13 +179,15 @@ def add_balls_before_SORT(frames, detected, tracked, tracker_min_hits):
         frames[-((tracker_min_hits+1)-idx)] = FrameInfo(frame.frame, True, tuple(balls_to_add_temp[idx]), color)
 
 
-def add_lost_frames(frame_id, last_tracked_frame, frames, ball_frames):
+def add_lost_frames(frame_id, last_tracked_frame, frames, pitch_frames):
     if(frame_id - last_tracked_frame > 1):
         print('Lost frames:', frame_id - last_tracked_frame)
         frames_to_add = frames[last_tracked_frame: frame_id]
+
+        # Mark the detection in lost in this frame
         for ball_frame in frames_to_add:
             ball_frame.ball_lost_tracking = True
-        ball_frames.extend(frames_to_add)
+        pitch_frames.extend(frames_to_add)
 
 
 # def get_bright_color():

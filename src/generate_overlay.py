@@ -2,21 +2,17 @@ import cv2
 import numpy as np
 import copy
 from image_registration import cross_correlation_shifts
-from src.utils import draw_ball_curve
+from src.utils import draw_ball_curve, fill_lost_tracking
 from src.FrameInfo import FrameInfo
 
 
 def generate_overlay(video_frames, width, height, fps, outputPath):
     print('Saving overlay result to', outputPath)
-    frame_lists = sorted(video_frames, key=len, reverse=True)
-
-    # Use Polyfit to approximate the untracked balls
-    for frame_list in frame_lists:
-        fill_lost_tracking(frame_list)
-
-    balls_in_curves = [[] for i in range(len(frame_lists))]
     codec = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(outputPath, codec, fps / 2, (width, height))
+
+    frame_lists = sorted(video_frames, key=len, reverse=True)
+    balls_in_curves = [[] for i in range(len(frame_lists))]
     shifts = {}
 
     # Take the longest frames as background
@@ -70,49 +66,3 @@ def image_registration(ref_image, offset_image, shifts, list_idx, width, height)
     corrected_image = cv2.warpAffine(offset_image.frame, matrix, (width, height))
 
     return corrected_image
-
-
-def fill_lost_tracking(frame_list):
-    balls_x = [frame.ball[0] for frame in frame_list if frame.ball_in_frame]
-    balls_y = [frame.ball[1] for frame in frame_list if frame.ball_in_frame]
-
-    # Get the polynomial equation
-    curve = np.polyfit(balls_x, balls_y, 2)
-    poly = np.poly1d(curve)
-
-    lost_sections = []
-    in_lost = False
-    frame_count = 0
-
-    # Get the sections where the ball is lost tracked
-    for idx, frame in enumerate(frame_list):
-        if(frame.ball_lost_tracking and frame_count == 0):
-            in_lost = True
-            lost_sections.append([])
-
-        if(in_lost and not(frame.ball_lost_tracking)):
-            in_lost = False
-            frame_count = 0
-
-        if(in_lost):
-            lost_sections[-1].append(idx)
-            frame_count += 1
-
-    # Modify the frames in lost section with the approximated ball
-    for lost_section in lost_sections:
-        if(lost_section):
-            prev_frame = frame_list[lost_section[0]-1]
-            last_frame = frame_list[lost_section[-1]+1]
-            color = prev_frame.ball_color
-
-            lost_idx = [frame_list[i] for i in lost_section]
-
-            # Speed is the x difference for each frame
-            diff = last_frame.ball[0] - prev_frame.ball[0]
-            speed = int(diff / (len(lost_idx)+1))
-
-            for idx, frame in enumerate(lost_idx):
-                x = prev_frame.ball[0] + (speed * (idx+1))
-                y = int(poly(x))
-                frame = FrameInfo(frame.frame, True, (x, y), color)
-                print('Add', x, y)
