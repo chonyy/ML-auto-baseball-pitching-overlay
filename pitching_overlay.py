@@ -45,14 +45,12 @@ if __name__ == '__main__':
     for idx, path in enumerate(os.listdir(rootDir)):
         print(f'Processing Video {idx + 1}')
         video_path = rootDir + '/' + path
-        ball_frames, width, height, fps = get_pitch_frames(video_path, infer, size, iou, score)
-        pitch_frames.append(ball_frames)
-        # try:
-        #     ball_frames, width, height, fps = get_pitch_frames(video_path, infer, size, iou, score)
-        #     pitch_frames.append(ball_frames)
-        # except Exception as e:
-        #     print(f'Error: Sorry we could not get enough baseball detection from the video, video {path} will not be overlayed')
-        #     print(e)
+        try:
+            ball_frames, width, height, fps = get_pitch_frames(video_path, infer, size, iou, score)
+            pitch_frames.append(ball_frames)
+        except Exception as e:
+            print(f'Error: Sorry we could not get enough baseball detection from the video, video {path} will not be overlayed')
+            print(e)
 
     if(len(pitch_frames)):
         generate_overlay(pitch_frames, width, height, fps, outputPath)

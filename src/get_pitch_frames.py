@@ -31,11 +31,11 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
     detected_balls = []
     tracked_balls = []
     frames = []
-    tracker_min_hits = 3
+    tracker_min_hits = 1
     frame_id = 0
 
     # Create Object Tracker
-    tracker = Sort(max_age=8, min_hits=tracker_min_hits, iou_threshold=0.3)
+    tracker = Sort(max_age=8, min_hits=tracker_min_hits, iou_threshold=0.01)
 
     while True:
         return_value, frame = vid.read()
@@ -82,14 +82,13 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
 
             # Append the frame with detected ball location
             last_ball = tuple(tracked_balls[-1][:-1])
-            print('append')
             pitch_frames.append(FrameInfo(frame, True, last_ball, color))
             last_tracked_frame = frame_id
 
         result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         detection = cv2.resize((result), (0, 0), fx=0.5, fy=0.5)
         cv2.imshow("result", detection)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(50) & 0xFF == ord('q'):
             break
 
         frame_id += 1
@@ -98,7 +97,7 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
     fill_lost_tracking(pitch_frames)
 
     # Add five more frames after the last tracked frame
-    pitch_frames.extend(frames[last_tracked_frame: last_tracked_frame+5])
+    pitch_frames.extend(frames[last_tracked_frame: last_tracked_frame+10])
     return pitch_frames, width, height, fps
 
 
@@ -129,7 +128,7 @@ def detect(infer, frame, input_size, iou, score_threshold, detected_balls):
     classes = classes.numpy()
     valid_detections = valid_detections.numpy()
 
-    offset = 30
+    offset = 200
     accuracyThreshold = 0.7
     frame_h, frame_w, _ = frame.shape
     detections = []
@@ -147,7 +146,7 @@ def detect(infer, frame, input_size, iou, score_threshold, detected_balls):
             centerY = int((coor[0] + coor[2]) / 2)
 
             print(f'Baseball Detected ({centerX}, {centerY}), Confidence: {str(round(score, 2))}')
-            cv2.circle(frame, (centerX, centerY), 15, (255, 0, 0), -1)
+            # cv2.circle(frame, (centerX, centerY), 15, (255, 0, 0), -1)
             detected_balls.append([centerX, centerY])
             detections.append(np.array([coor[1]-offset, coor[0]-offset, coor[3]+offset, coor[2]+offset, score]))
 
