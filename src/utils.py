@@ -70,7 +70,7 @@ def fill_lost_tracking(frame_list):
                 frame.ball_in_frame = True
                 frame.ball = (x, y)
                 frame.ball_color = color
-                print('Fill', x, y)
+                # print('Fill', x, y)
 
 
 def distance(x, y):
