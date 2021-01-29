@@ -1,7 +1,8 @@
+import tensorflow as tf
 import os
 import sys
 import warnings
-import tensorflow as tf
+import logging
 from tensorflow.python.saved_model import tag_constants
 from optparse import OptionParser
 from src.get_pitch_frames import get_pitch_frames
@@ -10,6 +11,7 @@ from src.generate_overlay import generate_overlay
 # Ignore warnings
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
+tf.get_logger().setLevel(logging.ERROR)
 
 # Allow GPU memory growth
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
@@ -45,5 +47,12 @@ if __name__ == '__main__':
         video_path = rootDir + '/' + path
         ball_frames, width, height, fps = get_pitch_frames(video_path, infer, size, iou, score)
         pitch_frames.append(ball_frames)
+        # try:
+        #     ball_frames, width, height, fps = get_pitch_frames(video_path, infer, size, iou, score)
+        #     pitch_frames.append(ball_frames)
+        # except Exception as e:
+        #     print(f'Error: Sorry we could not get enough baseball detection from the video, video {path} will not be overlayed')
+        #     print(e)
 
-    generate_overlay(pitch_frames, width, height, fps, outputPath)
+    if(len(pitch_frames)):
+        generate_overlay(pitch_frames, width, height, fps, outputPath)

@@ -43,10 +43,8 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frames.append(FrameInfo(frame, False))
         else:
-            if frame_id == vid.get(cv2.CAP_PROP_FRAME_COUNT):
-                print("Processing complete")
-                break
-            raise ValueError("Something went wrong! Only MP4 format is accepted.")
+            print("Processing complete")
+            break
 
         # Detect the baseball in the frame
         detections = detect(infer, frame, input_size, iou, score_threshold, detected_balls)
@@ -84,6 +82,7 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
 
             # Append the frame with detected ball location
             last_ball = tuple(tracked_balls[-1][:-1])
+            print('append')
             pitch_frames.append(FrameInfo(frame, True, last_ball, color))
             last_tracked_frame = frame_id
 
@@ -97,6 +96,7 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
 
     # Use Polyfit to approximate the untracked balls
     fill_lost_tracking(pitch_frames)
+
     # Add five more frames after the last tracked frame
     pitch_frames.extend(frames[last_tracked_frame: last_tracked_frame+5])
     return pitch_frames, width, height, fps
@@ -130,7 +130,7 @@ def detect(infer, frame, input_size, iou, score_threshold, detected_balls):
     valid_detections = valid_detections.numpy()
 
     offset = 30
-    accuracyThreshold = 0.95
+    accuracyThreshold = 0.7
     frame_h, frame_w, _ = frame.shape
     detections = []
 
@@ -147,7 +147,7 @@ def detect(infer, frame, input_size, iou, score_threshold, detected_balls):
             centerY = int((coor[0] + coor[2]) / 2)
 
             print(f'Baseball Detected ({centerX}, {centerY}), Confidence: {str(round(score, 2))}')
-            # cv2.circle(frame, (centerX, centerY), 15, (255, 0, 0), -1)
+            cv2.circle(frame, (centerX, centerY), 15, (255, 0, 0), -1)
             detected_balls.append([centerX, centerY])
             detections.append(np.array([coor[1]-offset, coor[0]-offset, coor[3]+offset, coor[2]+offset, score]))
 

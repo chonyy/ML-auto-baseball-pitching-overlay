@@ -26,6 +26,9 @@ def fill_lost_tracking(frame_list):
     balls_x = [frame.ball[0] for frame in frame_list if frame.ball_in_frame]
     balls_y = [frame.ball[1] for frame in frame_list if frame.ball_in_frame]
 
+    print(balls_x)
+    print(balls_y)
+
     # Get the polynomial equation
     curve = np.polyfit(balls_x, balls_y, 2)
     poly = np.poly1d(curve)
