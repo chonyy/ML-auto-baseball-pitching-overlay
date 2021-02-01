@@ -63,7 +63,7 @@ python pitching_overlay.py --videos_folder "./videos/videos"
 ## 🔨 Project Structure
 
 <p align=center>
-    <img src="img/structure.png">
+    <img src="img/structure-new.png">
 </p>
 
 ## 🎬 More Demo
