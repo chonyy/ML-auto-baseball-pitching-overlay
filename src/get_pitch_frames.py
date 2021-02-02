@@ -31,11 +31,11 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
     detected_balls = []
     tracked_balls = []
     frames = []
-    tracker_min_hits = 1
+    tracker_min_hits = 3
     frame_id = 0
 
     # Create Object Tracker
-    tracker = Sort(max_age=8, min_hits=tracker_min_hits, iou_threshold=0.01)
+    tracker = Sort(max_age=8, min_hits=tracker_min_hits, iou_threshold=0.1)
 
     while True:
         return_value, frame = vid.read()
@@ -128,8 +128,8 @@ def detect(infer, frame, input_size, iou, score_threshold, detected_balls):
     classes = classes.numpy()
     valid_detections = valid_detections.numpy()
 
-    offset = 200
-    accuracyThreshold = 0.7
+    offset = 100
+    accuracyThreshold = 0.95
     frame_h, frame_w, _ = frame.shape
     detections = []
 
