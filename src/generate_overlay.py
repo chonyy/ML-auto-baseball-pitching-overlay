@@ -37,9 +37,9 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
         if(base_frame.ball_in_frame):
             balls_in_curves[0].append([base_frame.ball[0], base_frame.ball[1], base_frame.ball_color])
 
-        # Emphasize base frame
-        base_frame_weight = 0.55
-        background_frame = cv2.addWeighted(base_frame.frame, base_frame_weight, background_frame, 1-base_frame_weight, 0)
+        # # Emphasize base frame
+        # base_frame_weight = 0.55
+        # background_frame = cv2.addWeighted(base_frame.frame, base_frame_weight, background_frame, 1-base_frame_weight, 0)
 
         # Draw transparent curve and non-transparent balls
         for trajectory in balls_in_curves:

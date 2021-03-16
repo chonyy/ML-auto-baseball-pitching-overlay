@@ -61,7 +61,7 @@ def get_pitch_frames(video_path, infer, input_size, iou, score_threshold):
             start = (t[0], t[1])
             end = (t[2], t[3])
             # cv2.rectangle(frame, start, end, (255, 0, 0), 5)
-            # cv2.putText(frame, str(t[4]), start, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255), 2, cv2.LINE_AA)
+            # cv2.putText(frame, 'ID:'+str(t[4]), start, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255), 2, cv2.LINE_AA)
 
             color = track_colors[t[4] % 12]
             centerX = int((t[0] + t[2]) / 2)
@@ -128,7 +128,7 @@ def detect(infer, frame, input_size, iou, score_threshold, detected_balls):
     classes = classes.numpy()
     valid_detections = valid_detections.numpy()
 
-    offset = 100
+    offset = 50
     accuracyThreshold = 0.95
     frame_h, frame_w, _ = frame.shape
     detections = []
