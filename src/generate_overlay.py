@@ -14,6 +14,7 @@ def generate_overlay(video_frames, width, height, fps, outputPath):
     frame_lists = sorted(video_frames, key=len, reverse=True)
     balls_in_curves = [[] for i in range(len(frame_lists))]
     shifts = {}
+    times = []
 
     # Take the longest frames as background
     for idx, base_frame in enumerate(frame_lists[0]):
