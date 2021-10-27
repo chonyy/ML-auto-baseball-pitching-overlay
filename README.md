@@ -22,8 +22,6 @@ A fine-tuned YOLOv4 model is used to get the location of the ball. Then, I imple
 
 I'm still trying to improve it! Feel free to follow this project, also check out the Todo list.
 
-The idea came from [this incredible overlay](https://www.youtube.com/watch?v=jUbAAurrnwU&ab_channel=YuTubeKs).
-
 ## 💻 Getting Started
 
 These instructions will get you a copy of the project, and generates your own pitching overlay clip!
