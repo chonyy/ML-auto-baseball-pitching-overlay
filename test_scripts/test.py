@@ -39,7 +39,7 @@ def generate_overlay(frames, width, height, fps):
         out.write(resultFrame)
         if cv2.waitKey(120) & 0xFF == ord('q'): break
 
-video_path = 'videos/videos/11.mp4'
+video_path = os.path.join("videos", "videos1/11.mp4")
 vid = cv2.VideoCapture(video_path)
 
 width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
