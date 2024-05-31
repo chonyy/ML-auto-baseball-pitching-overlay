@@ -23,7 +23,7 @@ if __name__ == '__main__':
     optparser.add_option('-f', '--videos_folder',
                          dest='rootDir',
                          help='Root directory that contains your pitching videos',
-                         default='./videos/videos')
+                         default='./videos/videos1')
     (options, args) = optparser.parse_args()
 
     # Initialize variables

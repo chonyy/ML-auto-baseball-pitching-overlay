@@ -3,7 +3,7 @@ from __future__ import print_function
 import os
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from skimage import io
@@ -12,20 +12,14 @@ import glob
 import time
 import argparse
 from filterpy.kalman import KalmanFilter
+from scipy.optimize import linear_sum_assignment
 
 np.random.seed(0)
 
 
 def linear_assignment(cost_matrix):
-  try:
-    import lap
-    _, x, y = lap.lapjv(cost_matrix, extend_cost=True)
-    return np.array([[y[i],i] for i in x if i >= 0]) #
-  except ImportError:
-    from scipy.optimize import linear_sum_assignment
     x, y = linear_sum_assignment(cost_matrix)
-    return np.array(list(zip(x, y)))
-
+    return np.array(list(zip(x, y))) 
 
 def iou_batch(bb_test, bb_gt):
   """
