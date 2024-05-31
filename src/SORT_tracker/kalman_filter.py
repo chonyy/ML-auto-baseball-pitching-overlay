@@ -86,8 +86,7 @@ class KalmanFilter(object):
         C = np.dot(self.A, np.dot(self.P, self.A.T)) + self.R
         K = np.dot(self.P, np.dot(self.A.T, np.linalg.inv(C)))
 
-        self.u = np.round(self.u + np.dot(K, (self.b - np.dot(self.A,
-                                                              self.u))))
+        self.u = np.round(self.u + np.dot(K, (self.b - np.dot(self.A, self.u))))
         self.P = self.P - np.dot(K, np.dot(C, K.T))
         self.lastResult = self.u
         return self.u
